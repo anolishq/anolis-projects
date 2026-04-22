@@ -1,0 +1,19 @@
+# Anolis package archives — generated deploy artifacts, not committed
+*.anpkg
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
