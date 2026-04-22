@@ -1,0 +1,31 @@
+schema_version: 1
+machine_id: mixed-bus-dev
+display_name: Mixed-Bus Development Profile
+
+runtime_profiles:
+  linux_hardware: config/anolis-runtime.mixed.yaml
+  win_mock: config/anolis-runtime.mixed.win.mock.yaml
+  win_mock_conflict: config/anolis-runtime.mixed.win.mock.conflict.yaml
+
+providers:
+  bread0:
+    config: config/provider-bread.yaml
+    notes: "CRUMBS bus devices: rlht0 (0x0A), dcmt0 (0x14), dcmt1 (0x15)"
+  ezo0:
+    config: config/provider-ezo.yaml
+    notes: "EZO sensors: ph0 (0x63), do0 (0x61)"
+
+compatibility:
+  runtime:
+    config_contract: "01-runtime-config"
+    http_contract: "02-runtime-http"
+    notes: "Hardware validation profile for bread0 + ezo0 combined bus."
+  providers:
+    bread0:
+      strategy: local-build
+      version: dev-linux-hardware-release
+      notes: "Built from sibling anolis-provider-bread repo."
+    ezo0:
+      strategy: local-build
+      version: dev-linux-hardware-release
+      notes: "Built from sibling anolis-provider-ezo repo."
