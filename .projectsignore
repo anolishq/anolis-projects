@@ -1,3 +1,0 @@
-# Directories under projects/ to exclude from project validation.
-# One entry per line. Blank lines and lines starting with # are ignored.
-next-project
