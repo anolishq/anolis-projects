@@ -6,8 +6,8 @@ Each subdirectory of `projects/` is an independent, self-contained application p
 
 ## Projects
 
-| Directory | Description | Status |
-|---|---|---|
+| Directory                                            | Description                                                          | Status |
+| ---------------------------------------------------- | -------------------------------------------------------------------- | ------ |
 | [`projects/bioreactor-v1/`](projects/bioreactor-v1/) | Stirred bioreactor with dual dosing, temperature, pH, and DO sensing | Active |
 
 ## Conventions
@@ -29,6 +29,7 @@ anolis-provider-ezo/
 ```
 
 Follow the runbook in the project you want to deploy:
+
 - [Bioreactor v1 runbook](projects/bioreactor-v1/docs/runbook.md)
 
 ## License

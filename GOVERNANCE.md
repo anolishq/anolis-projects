@@ -17,14 +17,14 @@ Platform-generic fixtures (`demo.xml`, test harnesses, shared schemas) live in
 
 ## Ownership convention
 
-| Layer | Owner repo |
-|---|---|
-| Runtime binary + scheduling engine | `anolis` |
-| Provider binaries | `anolis-provider-bread`, `anolis-provider-ezo`, … |
-| Protocol definitions | `anolis-protocol` |
-| Schemas | `anolis` (published via `anolishq.github.io`) |
-| Machine-specific config + behaviors | **`anolis-projects`** (this repo) |
-| Workbench application | `anolis-workbench` |
+| Layer                               | Owner repo                                        |
+| ----------------------------------- | ------------------------------------------------- |
+| Runtime binary + scheduling engine  | `anolis`                                          |
+| Provider binaries                   | `anolis-provider-bread`, `anolis-provider-ezo`, … |
+| Protocol definitions                | `anolis-protocol`                                 |
+| Schemas                             | `anolis` (published via `anolishq.github.io`)     |
+| Machine-specific config + behaviors | **`anolis-projects`** (this repo)                 |
+| Workbench application               | `anolis-workbench`                                |
 
 ## Adding a new project
 
