@@ -43,10 +43,19 @@ jobs:
         run: |
           python - <<'EOF'
           import sys, pathlib
+          ignore_file = pathlib.Path(".projectsignore")
+          ignored = set()
+          if ignore_file.exists():
+              for line in ignore_file.read_text().splitlines():
+                  line = line.strip()
+                  if line and not line.startswith("#"):
+                      ignored.add(line)
           errors = []
+          checked = 0
           for project in pathlib.Path("projects").iterdir():
-              if not project.is_dir():
+              if not project.is_dir() or project.name in ignored:
                   continue
+              checked += 1
               mp = project / "machine-profile.yaml"
               if not mp.exists():
                   errors.append(f"{project}: missing machine-profile.yaml")
@@ -55,7 +64,7 @@ jobs:
               for e in errors:
                   print(f"  {e}")
               sys.exit(1)
-          print("All projects have machine-profile.yaml")
+          print(f"All {checked} project(s) have machine-profile.yaml (skipped: {ignored or 'none'})")
           EOF
 
       - name: Verify no .anpkg files committed
