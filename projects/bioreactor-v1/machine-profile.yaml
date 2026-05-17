@@ -27,7 +27,7 @@ compatibility:
   providers:
     bread0:
       strategy: local-build
-      version: dev-linux-hardware-release
+      version: dev-release
       notes: "Built from sibling anolis-provider-bread repo."
     ezo0:
       strategy: local-build

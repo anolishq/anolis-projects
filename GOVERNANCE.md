@@ -68,7 +68,7 @@ Until artifact-first provider binary resolution is implemented (Phase 5), runtim
 YAML configs reference provider binaries via sibling repo relative paths:
 
 ```
-../anolis-provider-bread/build/dev-linux-hardware-release/anolis-provider-bread
+../anolis-provider-bread/build/dev-release/anolis-provider-bread
 ```
 
 This requires the anolis ecosystem repos to be cloned as siblings under a shared

@@ -90,7 +90,7 @@
     "runtime_config": "../anolis-projects/projects/bioreactor-v1/config/anolis-runtime.bioreactor.manual.yaml",
     "providers": {
       "bread0": {
-        "executable": "../anolis-provider-bread/build/dev-linux-hardware-release/anolis-provider-bread",
+        "executable": "../anolis-provider-bread/build/dev-release/anolis-provider-bread",
         "bus_path": "/dev/i2c-1"
       },
       "ezo0": {

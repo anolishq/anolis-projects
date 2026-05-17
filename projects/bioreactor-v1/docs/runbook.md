@@ -35,12 +35,12 @@ See each provider repo's README for build instructions:
 - [anolis-provider-ezo](../../../anolis-provider-ezo/README.md)
 - [anolis](../../../anolis/README.md)
 
-Target preset for hardware: `dev-linux-hardware-release`
+Target preset for hardware: `dev-release` (bread), `dev-linux-hardware-release` (ezo)
 
 Expected binary paths (from inside `anolis/`):
 
 ```
-../anolis-provider-bread/build/dev-linux-hardware-release/anolis-provider-bread
+../anolis-provider-bread/build/dev-release/anolis-provider-bread
 ../anolis-provider-ezo/build/dev-linux-hardware-release/anolis-provider-ezo
 build/dev-release/core/anolis-runtime
 ```
