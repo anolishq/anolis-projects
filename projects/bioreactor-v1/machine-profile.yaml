@@ -39,7 +39,7 @@ compatibility:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.1.21"
+    version: "0.1.22"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
