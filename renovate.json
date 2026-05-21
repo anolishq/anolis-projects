@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update component versions pinned in machine-profile.yaml",
+      "fileMatch": ["projects/.+/machine-profile\\.yaml$"],
+      "matchStrings": [
+        "repo:\\s*(?<depName>[^\\s]+)\\s*\\n\\s*version:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group all anolis component updates into a single PR",
+      "matchManagers": ["custom.regex"],
+      "groupName": "anolis components",
+      "commitMessagePrefix": "deps:",
+      "semanticCommitType": "deps"
+    }
+  ]
+}
