@@ -33,3 +33,21 @@ compatibility:
       strategy: local-build
       version: dev-linux-hardware-release
       notes: "Built from sibling anolis-provider-ezo repo."
+
+# Pinned artifact versions for bundle CI.
+# Renovate auto-bumps these when upstream repos publish new releases.
+components:
+  runtime:
+    repo: anolishq/anolis
+    version: "0.1.21"
+  providers:
+    bread:
+      repo: anolishq/anolis-provider-bread
+      version: "0.2.8"
+    ezo:
+      repo: anolishq/anolis-provider-ezo
+      version: "0.2.5"
+  optional:
+    telemetry_export:
+      package: anolis-telemetry-export
+      version: "0.1.0"
