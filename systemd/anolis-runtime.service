@@ -1,0 +1,17 @@
+[Unit]
+Description=Anolis Runtime
+After=network.target
+Wants=anolis-provider-bread.service anolis-provider-ezo.service
+
+[Service]
+Type=simple
+User=anolis
+Group=anolis
+ExecStart=/opt/anolis/bin/anolis-runtime --config /opt/anolis/config/runtime.yaml
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Anolis Provider — EZO (Atlas Scientific)
+After=network.target
+PartOf=anolis-runtime.service
+
+[Service]
+Type=simple
+User=anolis
+Group=anolis
+SupplementaryGroups=i2c
+ExecStart=/opt/anolis/bin/anolis-provider-ezo --config /opt/anolis/config/providers/ezo.yaml
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
