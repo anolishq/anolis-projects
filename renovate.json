@@ -20,6 +20,11 @@
       "groupName": "anolis components",
       "commitMessagePrefix": "deps:",
       "semanticCommitType": "deps"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "pinDigests": true
     }
   ]
 }
