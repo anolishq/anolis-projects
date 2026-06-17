@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["local>anolishq/renovate-config"],
   "customManagers": [
     {
       "customType": "regex",
@@ -22,11 +22,6 @@
       "groupName": "anolis components",
       "commitMessagePrefix": "deps:",
       "semanticCommitType": "deps"
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "groupName": "github-actions",
-      "pinDigests": true
     }
   ]
 }
