@@ -43,10 +43,10 @@ components:
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.2.10"
+      version: "0.2.11"
     ezo:
       repo: anolishq/anolis-provider-ezo
-      version: "0.2.6"
+      version: "0.2.7"
   optional:
     telemetry_export:
       package: anolis-telemetry-export
