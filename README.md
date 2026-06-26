@@ -14,7 +14,7 @@ Each subdirectory of `projects/` is an independent, self-contained application p
 
 - **One directory per deployment target.** Each project owns its runtime YAML variants, provider YAML configs, behavior XML trees, and workbench `system.json`.
 - **No generated artifacts committed.** `.anpkg` files are gitignored.
-- **Schema lock CI.** Each project directory is validated against the published machine-profile schema on every push.
+- **Schema lock CI.** Each project's `machine-profile.yaml` is validated against the local [`machine-profile.schema.json`](machine-profile.schema.json) (via `check-jsonschema`) on every push.
 - **Provider binary paths.** Until Phase 5 (artifact-first provider resolution), runtime configs reference sibling-repo build outputs. See each project's `docs/runbook.md` for the full setup checklist.
 
 ## Getting Started

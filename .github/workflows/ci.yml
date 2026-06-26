@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install PyYAML
-        run: pip install pyyaml
+      - name: Install Python dependencies
+        run: pip install pyyaml check-jsonschema
 
       - name: Validate all YAML files
         run: |
@@ -69,6 +69,21 @@ jobs:
             exit 1
           fi
           echo "No .anpkg files found — OK"
+
+      - name: Validate machine-profile.yaml against local JSON Schema
+        run: |
+          check-jsonschema \
+            --schemafile machine-profile.schema.json \
+            projects/*/machine-profile.yaml
+
+      - name: Shellcheck shell scripts
+        run: |
+          files=$(git ls-files '*.sh')
+          if [ -n "$files" ]; then
+            shellcheck $files
+          else
+            echo "No shell scripts to check"
+          fi
 
   ok:
     name: ok

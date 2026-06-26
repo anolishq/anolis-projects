@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "machine-profile.schema.json",
+  "title": "Anolis machine profile",
+  "description": "Structure of projects/<name>/machine-profile.yaml — the single source of truth for a deployment target. Validated locally in CI; the renovate regex manager and bundle-release workflow depend on the components.* shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "machine_id",
+    "display_name",
+    "runtime_profiles",
+    "providers",
+    "compatibility"
+  ],
+  "properties": {
+    "schema_version": {
+      "description": "Profile format version.",
+      "const": 1
+    },
+    "machine_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_profiles": {
+      "description": "Named runtime config variants mapped to their YAML paths.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "providers": {
+      "description": "Provider instances and their config paths.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["config"],
+        "properties": {
+          "config": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "behaviors": {
+      "description": "Behavior-tree XML paths relative to the project directory.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "providers"],
+      "properties": {
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["config_contract", "http_contract"],
+          "properties": {
+            "config_contract": { "type": "string" },
+            "http_contract": { "type": "string" },
+            "notes": { "type": "string" }
+          }
+        },
+        "providers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["strategy", "version"],
+            "properties": {
+              "strategy": { "type": "string" },
+              "version": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "description": "Pinned artifact versions for bundle CI. Renovate auto-bumps repo/version pairs. Required for a profile to be bundle-released.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "providers"],
+      "properties": {
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repo", "version"],
+          "properties": {
+            "repo": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 }
+          }
+        },
+        "providers": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["repo", "version"],
+            "properties": {
+              "repo": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "optional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["package", "version"],
+            "properties": {
+              "package": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
