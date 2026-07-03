@@ -8,9 +8,13 @@
 ## Build / test
 
 - **No compiled code.** CI installs `pyyaml` + `check-jsonschema` and validates
-  every `projects/<name>/machine-profile.yaml` against the local
-  `machine-profile.schema.json`. Run locally:
-  `check-jsonschema --schemafile machine-profile.schema.json projects/*/machine-profile.yaml`.
+  every `projects/<name>/machine-profile.yaml` against the **canonical** schema
+  from the anolis release pinned in `schema-source.json` (there is no local
+  schema copy — the canonical one lives in `anolishq/anolis`
+  `schemas/machine/`, published per release; Renovate bumps the pin). Run
+  locally: download `anolis-<pin>-machine-profile-schema.tar.gz` from that
+  release, then
+  `check-jsonschema --schemafile <extracted>/schemas/machine/machine-profile.schema.json projects/*/machine-profile.yaml`.
 - The required CI status check is the **`ok`** job; never merge red.
 
 ## Tooling

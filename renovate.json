@@ -13,6 +13,18 @@
       ],
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump the canonical machine-profile schema pin (CI fetches it from the anolis release)",
+      "managerFilePatterns": [
+        "/^schema-source\\.json$/"
+      ],
+      "matchStrings": [
+        "\"repo\":\\s*\"(?<depName>[^\"]+)\",\\s*\\n\\s*\"version\":\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
     }
   ],
   "packageRules": [
