@@ -23,7 +23,7 @@
   project directory MUST contain one; CI fails if missing or schema-invalid.
 - Its exact shape is load-bearing beyond schema validation: the Renovate
   **regex customManager** bumps component versions pinned inside
-  `machine-profile.yaml`, and `bundle-release.yml` reads paths from it. Don't
-  rename keys/paths casually.
+  `machine-profile.yaml`, and `install.sh` (in the anolis repo) reads it to
+  build/install a deployment. Don't rename keys/paths casually.
 - **Behavior trees are XML** (`projects/*/behaviors/*.xml`); **configs are YAML**
   (`projects/*/config/*.yaml`). Keep the formats as-is.

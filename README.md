@@ -17,17 +17,13 @@ Each subdirectory of `projects/` is an independent, self-contained application p
 - **Schema lock CI.** Each project's `machine-profile.yaml` is validated against the local [`machine-profile.schema.json`](machine-profile.schema.json) (via `check-jsonschema`) on every push.
 - **Provider binary paths.** Until Phase 5 (artifact-first provider resolution), runtime configs reference sibling-repo build outputs. See each project's `docs/runbook.md` for the full setup checklist.
 
-## Deployment (systemd)
+## Deployment
 
-`systemd/` ships a **single** unit, `anolis-runtime.service`, which is installed and enabled
-by `install.sh` and the bundle. This is deliberate: the runtime **spawns and supervises each
-provider as a child subprocess** (via the `command`/`args` + `restart_policy` in the runtime
-config, over the child's stdin/stdout). There is no connect-to-a-running-provider mode in the
-runtime, so providers are **not** independent systemd services.
-
-Do not add per-provider units. Running a provider as its own service alongside the runtime
-double-spawns it and contends for the I2C bus. Provider children inherit the runtime unit's
-`SupplementaryGroups=i2c gpio dialout` for hardware bus access, so one unit suffices.
+This repo holds **only** deployment descriptors (examples/config). Building and
+installing a deployment is handled by `install.sh` in the
+[anolis](https://github.com/anolishq/anolis) repo — an online install driven by a
+config, or `install.sh --stage` to build an offline bundle locally. No packaging
+machinery (bundle CI, systemd units, config rendering) lives here.
 
 ## Getting Started
 

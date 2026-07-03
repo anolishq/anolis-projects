@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "machine-profile.schema.json",
   "title": "Anolis machine profile",
-  "description": "Structure of projects/<name>/machine-profile.yaml — the single source of truth for a deployment target. Validated locally in CI; the renovate regex manager and bundle-release workflow depend on the components.* shape.",
+  "description": "Structure of projects/<name>/machine-profile.yaml — the single source of truth for a deployment target. Validated locally in CI; the renovate regex manager and install.sh (in the anolis repo) depend on the components.* shape.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -93,7 +93,7 @@
       }
     },
     "components": {
-      "description": "Pinned artifact versions for bundle CI. Renovate auto-bumps repo/version pairs. Required for a profile to be bundle-released.",
+      "description": "Pinned artifact versions read by install.sh (anolis repo) to build/install a deployment. Renovate auto-bumps repo/version pairs.",
       "type": "object",
       "additionalProperties": false,
       "required": ["runtime", "providers"],
