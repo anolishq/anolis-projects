@@ -70,10 +70,30 @@ jobs:
           fi
           echo "No .anpkg files found — OK"
 
-      - name: Validate machine-profile.yaml against local JSON Schema
+      # The canonical machine-profile schema lives in anolishq/anolis and is
+      # published per release; this repo consumes it at the release pinned in
+      # schema-source.json (Renovate bumps the pin).
+      - name: Fetch canonical machine-profile schema (pinned anolis release)
+        run: |
+          REPO=$(python3 -c "import json; print(json.load(open('schema-source.json'))['repo'])")
+          VER=$(python3 -c "import json; print(json.load(open('schema-source.json'))['version'])")
+          BASE="https://github.com/${REPO}/releases/download/v${VER}"
+          curl -fsSL -o /tmp/schema.tar.gz "${BASE}/anolis-${VER}-machine-profile-schema.tar.gz"
+          curl -fsSL -o /tmp/schema-manifest.json "${BASE}/machine-profile-schema-manifest.json"
+          GOT=$(sha256sum /tmp/schema.tar.gz | awk '{print $1}')
+          WANT=$(python3 -c "import json; print(json.load(open('/tmp/schema-manifest.json'))['sha256'])")
+          if [ "${GOT}" != "${WANT}" ]; then
+            echo "ERROR: schema artifact sha256 mismatch (got ${GOT}, manifest says ${WANT})" >&2
+            exit 1
+          fi
+          mkdir -p /tmp/anolis-schema
+          tar -xzf /tmp/schema.tar.gz -C /tmp/anolis-schema
+          test -f /tmp/anolis-schema/schemas/machine/machine-profile.schema.json
+
+      - name: Validate machine-profile.yaml against canonical schema
         run: |
           check-jsonschema \
-            --schemafile machine-profile.schema.json \
+            --schemafile /tmp/anolis-schema/schemas/machine/machine-profile.schema.json \
             projects/*/machine-profile.yaml
 
       - name: Shellcheck shell scripts

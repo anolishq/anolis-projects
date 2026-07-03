@@ -3,6 +3,8 @@ machine_id: mixed-bus-dev
 display_name: Mixed-Bus Development Profile
 
 runtime_profiles:
+  # manual = the default profile the schema requires; aliases the real-hardware config.
+  manual: config/anolis-runtime.mixed.yaml
   linux_hardware: config/anolis-runtime.mixed.yaml
   win_mock: config/anolis-runtime.mixed.win.mock.yaml
   win_mock_conflict: config/anolis-runtime.mixed.win.mock.conflict.yaml
