@@ -39,15 +39,15 @@ compatibility:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.1.30"
+    version: "0.1.31"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.2.11"
+      version: "0.3.0"
     ezo:
       repo: anolishq/anolis-provider-ezo
-      version: "0.2.7"
+      version: "0.3.0"
   optional:
     telemetry_export:
       package: anolis-telemetry-export
-      version: "0.1.0"
+      version: "0.1.1"
