@@ -62,7 +62,6 @@
       "bread0": {
         "kind": "bread",
         "provider_name": "bread0",
-        "require_live_session": true,
         "query_delay_us": 15000,
         "timeout_ms": 150,
         "retry_count": 3,
