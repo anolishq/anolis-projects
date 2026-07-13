@@ -2,8 +2,10 @@ provider:
   name: bread0
 
 hardware:
+  # bread 0.3.0 removed `require_live_session` and rejects it as an unknown key.
+  # A real bus_path already carries the intent: the CRUMBS session must open or
+  # startup throws.
   bus_path: /dev/i2c-1
-  require_live_session: true
   query_delay_us: 10000
   timeout_ms: 100
   retry_count: 2
