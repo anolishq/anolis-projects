@@ -43,7 +43,7 @@ components:
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.3.1"
+      version: "0.3.2"
     ezo:
       repo: anolishq/anolis-provider-ezo
       version: "0.3.0"
