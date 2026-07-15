@@ -39,11 +39,11 @@ compatibility:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.1.34"
+    version: "0.1.35"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.3.3"
+      version: "0.3.4"
     ezo:
       repo: anolishq/anolis-provider-ezo
       version: "0.3.0"
