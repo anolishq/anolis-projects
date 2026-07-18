@@ -24,7 +24,12 @@ devices:
     type: dcmt
     label: Reactor Sampling + Stirring (ch1 sample, ch2 stir)
     address: 0x14
+    # Firmware command watchdog (bread >=0.3.5 + DCMT firmware with
+    # CMD_WATCHDOG caps): auto-brake if the bus goes silent this long.
+    # The provider skips arming (with a warning) on older firmware.
+    command_watchdog_ms: 5000
   - id: dcmt1
     type: dcmt
     label: Reactor Dual Dosing (ch1 dose1, ch2 dose2)
     address: 0x15
+    command_watchdog_ms: 5000
