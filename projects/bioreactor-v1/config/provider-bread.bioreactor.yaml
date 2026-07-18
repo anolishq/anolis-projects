@@ -20,6 +20,7 @@ devices:
     type: rlht
     label: Reactor Temperature Node
     address: 0x0A
+    command_watchdog_ms: 5000
   - id: dcmt0
     type: dcmt
     label: Reactor Sampling + Stirring (ch1 sample, ch2 stir)
