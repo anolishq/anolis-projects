@@ -53,7 +53,7 @@
       <Fallback name="write_dcmt0_if_emit">
         <Sequence>
           <CheckBool value="{dcmt0_emit}" expected="true"/>
-          <CallDevice device_handle="bread0/dcmt0" function_name="set_open_loop" args="{dcmt0_open_loop_args}" success="{dcmt0_write_ok}" error="{dcmt0_write_error}"/>
+          <CallDevice device_handle="bread0/dcmt0" function_name="set_open_loop" args="{dcmt0_open_loop_args}" reason="{dcmt0_emit_reason}" success="{dcmt0_write_ok}" error="{dcmt0_write_error}"/>
         </Sequence>
         <AlwaysSuccess/>
       </Fallback>
@@ -90,7 +90,7 @@
       <Fallback name="write_dcmt1_if_emit">
         <Sequence>
           <CheckBool value="{dcmt1_emit}" expected="true"/>
-          <CallDevice device_handle="bread0/dcmt1" function_name="set_open_loop" args="{dcmt1_open_loop_args}" success="{dcmt1_write_ok}" error="{dcmt1_write_error}"/>
+          <CallDevice device_handle="bread0/dcmt1" function_name="set_open_loop" args="{dcmt1_open_loop_args}" reason="{dcmt1_emit_reason}" success="{dcmt1_write_ok}" error="{dcmt1_write_error}"/>
         </Sequence>
         <AlwaysSuccess/>
       </Fallback>
