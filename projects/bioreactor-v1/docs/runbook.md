@@ -58,8 +58,12 @@ Run from the `anolis/` directory:
 
 ### With telemetry (InfluxDB required)
 
-Edit `config/anolis-runtime.bioreactor.telemetry.yaml` to set your InfluxDB token,
-then:
+The InfluxDB token comes from the `INFLUXDB_TOKEN` environment variable —
+never from the config file, which is world-readable. On a provisioned device
+`install.sh --with-observability` writes a write-scoped token into
+`/etc/anolis/runtime.env`; on a dev bench export it yourself (e.g.
+`export INFLUXDB_TOKEN=dev-token` against the compose stack's defaults).
+Then:
 
 ```sh
 ./build/dev-release/core/anolis-runtime \
