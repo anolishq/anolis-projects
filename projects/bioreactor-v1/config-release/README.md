@@ -27,7 +27,7 @@ rather than built from source.
 | `anolis-runtime.bioreactor.manual.yaml` | No telemetry, no automation |
 | `anolis-runtime.bioreactor.telemetry.yaml` | Telemetry to InfluxDB, no automation |
 | `anolis-runtime.bioreactor.full.yaml` | Telemetry + automation |
-| `anolis-runtime.bioreactor.automation.yaml` | Automation + manual gating, no telemetry |
+| `anolis-runtime.bioreactor.automation.yaml` | Automation + manual gating + telemetry |
 
 The `provider-bread.bioreactor.yaml` and `provider-ezo.bioreactor.yaml` files
 in `config/` are shared between source-build and release installs — they contain
