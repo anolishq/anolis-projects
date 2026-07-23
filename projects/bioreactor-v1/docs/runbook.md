@@ -86,11 +86,16 @@ Then:
 
 ## Workbench (anolis-workbench)
 
-From the `anolis-workbench/` directory:
+Launch the workbench, then open <http://127.0.0.1:3010> and select/import this
+project from the UI (the CLI has no `session`/`--system` flags; it only takes
+`--host` / `--port` / `--no-browser` / `--version`):
 
 ```sh
-anolis-workbench session --system ../anolis-projects/projects/bioreactor-v1/workbench/system.json
+anolis-workbench
 ```
+
+For a fresh Raspberry Pi (workbench-on-Pi + provisioning), follow
+[`docs/quickstart-on-pi.md`](./quickstart-on-pi.md).
 
 ## Automation parameter reference
 
