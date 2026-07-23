@@ -64,13 +64,13 @@ bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + launches; browser op
 
 ```bash
 cd ~/anolis
-curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.37/install.sh
+curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.38/install.sh
 sudo bash install.sh --project "$PROJ" --with-observability 2>&1 | tee ~/anolis/install.log
 echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 ```
 
 - [ ] install exits **0** ("Anolis installation complete"); it pins runtime
-      0.1.37 / bread 0.3.7 / ezo 0.3.3 and starts one `anolis-runtime.service`.
+      0.1.38 / bread 0.3.7 / ezo 0.3.3 and starts one `anolis-runtime.service`.
 
 ## 3. ⚠️ Activate the SAFE variant (safe-state hooks + telemetry) — REQUIRED
 
@@ -90,7 +90,7 @@ sudo systemctl restart anolis-runtime
 ## 4. Verify bring-up
 
 ```bash
-curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.37, mode IDLE, 5 devices
+curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.38, mode IDLE, 5 devices
 curl -fsS localhost:8080/v0/providers/health | python3 -c "
 import json,sys
 for p in json.load(sys.stdin)['providers']:
