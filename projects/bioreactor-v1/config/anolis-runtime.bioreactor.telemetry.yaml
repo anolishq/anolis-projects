@@ -53,5 +53,52 @@ telemetry:
 automation:
   enabled: false
 
+# Software safe-state for POST /v0/estop (anolis#219).
+#
+# DISTINCT from automation.mode_transition_hooks: those fire on MODE
+# TRANSITIONS, this fires when the operator pulls the software e-stop. The
+# runtime parses it independently of the automation section, so it works on the
+# pure-manual variant too — which is the default install, and the one where a
+# novice is most likely to reach for the e-stop.
+#
+# Without this block the ladder (hooks -> setpoints -> zero) finds every rung
+# empty, reports software_safe_state "none", and /v0/estop latches without
+# driving anything. Verified on pi-g1 2026-08-03: the impeller kept spinning
+# straight through an e-stop press.
+safety:
+  safe_state:
+    hooks:
+      - device_handle: bread0/dcmt0
+        function_name: set_mode
+        args:
+          mode: open_loop
+      - device_handle: bread0/dcmt0
+        function_name: set_open_loop
+        args:
+          motor1_pwm: 0
+          motor2_pwm: 0
+      - device_handle: bread0/dcmt1
+        function_name: set_mode
+        args:
+          mode: open_loop
+      - device_handle: bread0/dcmt1
+        function_name: set_open_loop
+        args:
+          motor1_pwm: 0
+          motor2_pwm: 0
+      # NOT COVERED: the heater (bread0/rlht0).
+      #
+      # Its only CATEGORY_ACTUATE function is set_open_duty_pct, whose args are
+      # uint64 — and a hook argument cannot be uint64 (anolishq/anolis#252): the
+      # runtime parses every YAML integer to int64 and CallRouter type-checks
+      # strictly, so the call is rejected at e-stop time even though the config
+      # validates. Verified on pi-g1 2026-08-03:
+      #     FAIL bread0/rlht0 set_open_duty_pct
+      #          Argument 'duty1_pct': Type mismatch: expected uint64, got int64
+      #
+      # Add the two rlht0 calls (set_mode open_loop, then set_open_duty_pct 0/0 —
+      # mode first, or a closed-loop PID keeps driving the relay) once #252 lands.
+      # This rig has no heater load connected, so the gap is currently inert.
+
 logging:
   level: info
