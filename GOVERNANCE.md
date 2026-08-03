@@ -10,7 +10,6 @@ machine-specific configuration that wires a physical deployment together:
 - Machine profile (`machine-profile.yaml`) — the single source of truth for the
   deployment's identity, topology, and contract declarations
 - Behavior trees (XML) that implement automation logic
-- Workbench `system.json` used by `anolis-workbench` to spawn a local system session
 
 Platform-generic fixtures (`demo.xml`, test harnesses, shared schemas) live in
 `anolis` or `anolis-workbench` and are **not** copied here.

@@ -12,7 +12,7 @@ Each subdirectory of `projects/` is an independent, self-contained application p
 
 ## Conventions
 
-- **One directory per deployment target.** Each project owns its runtime YAML variants, provider YAML configs, behavior XML trees, and workbench `system.json`.
+- **One directory per deployment target.** Each project owns its runtime YAML variants, provider YAML configs, and behavior XML trees. A project directory IS the artifact set `install.sh` consumes, and the workbench imports it verbatim.
 - **No generated artifacts committed.** `.anpkg` files are gitignored.
 - **Schema CI.** Each project's `machine-profile.yaml` is validated against the **canonical** machine-profile schema (published with every [anolis](https://github.com/anolishq/anolis) release; this repo pins the release in [`schema-source.json`](schema-source.json), Renovate bumps it) on every push.
 - **Provider binary paths.** Until Phase 5 (artifact-first provider resolution), runtime configs reference sibling-repo build outputs. See each project's `docs/runbook.md` for the full setup checklist.
