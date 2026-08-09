@@ -123,9 +123,21 @@ system is running in `automation` or `full` mode.
 
 > **Parameters are not persisted.** Every value above reverts to the default in
 > this table whenever the runtime restarts — including across an upgrade. A
-> setting you changed during a run is gone after a restart, silently and with no
-> log line. Re-apply anything you tuned before re-enabling actuation, and treat
-> the defaults as what the machine will actually do the moment it comes back.
+> setting you changed during a run is gone after a restart, and nothing
+> announces the revert. Re-apply anything you tuned before re-enabling
+> actuation, and treat the defaults as what the machine will actually do the
+> moment it comes back.
+>
+> The *current* value is visible, though — the behaviour tree logs each
+> parameter it reads on every tick:
+>
+> ```
+> journalctl -u anolis-runtime -f | grep GetParameterNode
+> # [GetParameterNode] Read parameter 'impeller_pwm' = 100
+> ```
+>
+> At `tick_rate_hz: 2` that is twice a second, so it is the fastest way to
+> confirm what the machine is actually running on after any restart.
 
 ## DCMT channel map
 
