@@ -60,9 +60,14 @@ automation:
     - name: impeller_enable
       type: bool
       default: false
+    # Deliberately not the top of the range. Enabling the impeller is the one
+    # obvious action after activating automation, so whatever sits here is what
+    # a first run does — and a full-speed start is the largest current
+    # transient this machine makes, on a shared 12 V rail. 100 visibly stirs
+    # the vessel; raise it deliberately, not by default.
     - name: impeller_pwm
       type: int64
-      default: 255
+      default: 100
       min: 0
       max: 255
     - name: dose1_enable
