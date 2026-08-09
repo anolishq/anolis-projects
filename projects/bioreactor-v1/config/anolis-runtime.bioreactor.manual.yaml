@@ -79,6 +79,30 @@ safety:
         args:
           motor1_pwm: 0
           motor2_pwm: 0
+      # BRAKE LAST, and only after the PWMs above are zeroed.
+      #
+      # LMD18200::write() releases the brake pin before driving, so braking
+      # first and zeroing second would undo the brake. Zeroing as well as
+      # braking matters because the brake flag is what holds: if anything later
+      # clears it, a stale non-zero PWM would resume driving.
+      #
+      # In OPEN_LOOP the firmware gives the brake flag precedence over PWM and
+      # re-asserts it every loop, so this is a HELD brake, not a one-shot.
+      #
+      # Without these two calls the e-stop COASTS a spinning impeller: the
+      # hooks rung above is non-empty, so the ladder stops there and the
+      # zero_is_safe rung never runs. Coasting is not a safe state that a
+      # deliberate emergency action should produce.
+      - device_handle: bread0/dcmt0
+        function_name: set_brake
+        args:
+          motor1_brake: true
+          motor2_brake: true
+      - device_handle: bread0/dcmt1
+        function_name: set_brake
+        args:
+          motor1_brake: true
+          motor2_brake: true
       # NOT COVERED: the heater (bread0/rlht0).
       #
       # Its only CATEGORY_ACTUATE function is set_open_duty_pct, whose args are
