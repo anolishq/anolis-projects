@@ -105,7 +105,7 @@ system is running in `automation` or `full` mode.
 | Parameter                   | Type  | Default | Description                           |
 | --------------------------- | ----- | ------- | ------------------------------------- |
 | `impeller_enable`           | bool  | false   | Enable impeller motor                 |
-| `impeller_pwm`              | int64 | 255     | Impeller PWM (0–255)                  |
+| `impeller_pwm`              | int64 | 100     | Impeller PWM (0–255); not maximal by design |
 | `dose1_enable`              | bool  | false   | Enable dosing pump 1                  |
 | `dose1_pwm`                 | int64 | 240     | Dose 1 PWM (0–255)                    |
 | `dose1_startup_delay_s`     | int64 | 60      | Delay before first dose 1 pulse       |
@@ -120,6 +120,24 @@ system is running in `automation` or `full` mode.
 | `dose2_max_pulses_per_hour` | int64 | 0       | Rate cap for dose 2 (0 = unlimited)   |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
+
+> **Parameters are not persisted.** Every value above reverts to the default in
+> this table whenever the runtime restarts — including across an upgrade. A
+> setting you changed during a run is gone after a restart, and nothing
+> announces the revert. Re-apply anything you tuned before re-enabling
+> actuation, and treat the defaults as what the machine will actually do the
+> moment it comes back.
+>
+> The *current* value is visible, though — the behaviour tree logs each
+> parameter it reads on every tick:
+>
+> ```
+> journalctl -u anolis-runtime -f | grep GetParameterNode
+> # [GetParameterNode] Read parameter 'impeller_pwm' = 100
+> ```
+>
+> At `tick_rate_hz: 2` that is twice a second, so it is the fastest way to
+> confirm what the machine is actually running on after any restart.
 
 ## DCMT channel map
 
