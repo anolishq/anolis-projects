@@ -86,15 +86,25 @@ safety:
         args:
           motor1_pwm: 0
           motor2_pwm: 0
-      # The heater (bread0/rlht0). Mode first: the slice ignores
-      # set_open_duty_pct in closed loop. Between the two calls the heater holds
-      # its last PID duty; a failed second call is retried by the provider, and
-      # if the slice has dropped off the bus its command watchdog
-      # (command_watchdog_ms in the provider config) opens both relays. Not a
-      # 0 C setpoint instead: the slice's PID keeps its stored output term, so a
-      # setpoint below the measured temperature does not reliably zero the duty.
-      # Needs anolis >= 0.1.41, which resolves uint64 hook arguments
+      # The heater (bread0/rlht0): three calls, each one safe if another is
+      # lost. set_setpoints 0/0 turns a closed-loop heater off on Slice_RLHT
+      # firmware from 16a04dd on, where a setpoint <= 0 means off; on earlier
+      # firmware the PID keeps its stored output term, so it does not reliably
+      # zero the duty, and only the two calls after it do. Mode goes before
+      # duty because the slice ignores set_open_duty_pct in closed loop; between
+      # them the heater holds its last PID duty. A failed call is retried by the
+      # provider, and if the slice drops off the bus its command watchdog
+      # (command_watchdog_ms in the provider config) opens both relays. A call
+      # reported OK can still be lost on the slice (feastorg/Slice_RLHT#14), so
+      # read rlht0 back after an e-stop. The zero setpoints persist: closed-loop
+      # heating does not resume until a setpoint is set again. Needs
+      # anolis >= 0.1.41, which resolves uint64 hook arguments
       # (anolishq/anolis#252).
+      - device_handle: bread0/rlht0
+        function_name: set_setpoints
+        args:
+          setpoint1_c: 0.0
+          setpoint2_c: 0.0
       - device_handle: bread0/rlht0
         function_name: set_mode
         args:
