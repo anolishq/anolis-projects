@@ -34,6 +34,9 @@ compatibility:
       version: dev-linux-hardware-release
       notes: "Built from sibling anolis-provider-ezo repo."
 
+safety:
+  estop_topology: power_cut
+
 # Pinned artifact versions for bundle CI.
 # Renovate auto-bumps these when upstream repos publish new releases.
 components:
