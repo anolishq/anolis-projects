@@ -55,15 +55,11 @@ export PROJ=~/anolis/anolis-projects/projects/bioreactor-v1
 - [ ] `i2cdetect` shows **0a 14 15 61 63** — if any are missing, fix wiring/power
       before continuing (a missing address = a silently-excluded device later).
 
-> **Do not skip the `raspi-config` line.** `install.sh` claims to enable I²C for
-> you and, on any Pi with HDMI attached, does not — its check globs `/dev/i2c-*`
-> and matches the HDMI DDC buses (`i2c-20`, `i2c-21`), so it reports
-> `✓ i2c: already enabled` while the GPIO bus `/dev/i2c-1` does not exist. The
-> install then fails 30 s later with `health: runtime not responding` and never
-> names the cause. Tracked as anolishq/anolis#249; until it is fixed, enabling
-> I²C by hand here is what makes the install work.
+> **Keep the `raspi-config` line.** `install.sh` has enabled I²C itself since
+> anolis v0.1.41 (anolishq/anolis#249), but `i2cdetect` above needs the bus
+> before the install runs.
 >
-> Symptom if you get it wrong, visible only in the journal:
+> Symptom if the bus is missing, visible only in the journal:
 > `failed to open I2C bus '/dev/i2c-1': No such file or directory`
 
 ## 1. Install + launch the workbench (on the Pi)

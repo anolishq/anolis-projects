@@ -13,6 +13,11 @@ dissolved oxygen sensing.
 | ezo0 (EZO) | ph0 (0x63) | pH sensor |
 | ezo0 (EZO) | do0 (0x61) | Dissolved oxygen sensor |
 
+The Slice boards are gen1 (PlatformIO env `gen1_nano`; the DCMT at 0x14 is
+built with `-DI2C_ADR=20`). The gen1 RLHT has one relay, on D6: relay 2 (D7)
+is not connected, so `relay2_on` and the channel-2 duty drive nothing. The
+board generation is a build flag and cannot be read over the bus.
+
 ## Runtime variants
 
 | Variant | Telemetry | Automation | Config file |
