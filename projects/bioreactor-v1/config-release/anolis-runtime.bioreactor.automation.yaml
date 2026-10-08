@@ -245,15 +245,19 @@ safety:
       # firmware from 16a04dd on, where a setpoint <= 0 means off; on earlier
       # firmware the PID keeps its stored output term, so it does not reliably
       # zero the duty, and only the two calls after it do. Mode goes before
-      # duty because the slice ignores set_open_duty_pct in closed loop; between
-      # them the heater holds its last PID duty. A failed call is retried by the
-      # provider, and if the slice drops off the bus its command watchdog
-      # (command_watchdog_ms in the provider config) opens both relays. A call
-      # reported OK can still be lost on the slice (feastorg/Slice_RLHT#14), so
-      # read rlht0 back after an e-stop. The zero setpoints persist: closed-loop
-      # heating does not resume until a setpoint is set again. Needs
-      # anolis >= 0.1.41, which resolves uint64 hook arguments
-      # (anolishq/anolis#252).
+      # duty because the slice ignores set_open_duty_pct in closed loop. On
+      # firmware with feastorg/Slice_RLHT#24, entering open loop zeroes both
+      # on-times, so the relay stops at set_mode; on earlier firmware the
+      # heater holds its last PID duty until the duty call lands. The
+      # provider's retry does not cover a lost call: a write that fails once
+      # and is retried is never applied (measured on the DCMT, which shares the
+      # slice's CRUMBS receive path; anolishq/anolis-provider-bread#134). If
+      # the slice drops off the bus, its command watchdog (command_watchdog_ms
+      # in the provider config) opens both relays. A call reported OK is a
+      # frame sent, not one applied, so read rlht0 back after an e-stop. The
+      # zero setpoints persist: closed-loop heating does not resume until a
+      # setpoint is set again. Needs anolis >= 0.1.41, which resolves uint64
+      # hook arguments (anolishq/anolis#252).
       - device_handle: bread0/rlht0
         function_name: set_setpoints
         args:
