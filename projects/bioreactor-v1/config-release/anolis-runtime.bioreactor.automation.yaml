@@ -240,19 +240,34 @@ safety:
         args:
           motor1_pwm: 0
           motor2_pwm: 0
-      # NOT COVERED: the heater (bread0/rlht0).
-      #
-      # Its only CATEGORY_ACTUATE function is set_open_duty_pct, whose args are
-      # uint64 — and a hook argument cannot be uint64 (anolishq/anolis#252): the
-      # runtime parses every YAML integer to int64 and CallRouter type-checks
-      # strictly, so the call is rejected at e-stop time even though the config
-      # validates. Verified on pi-g1 2026-08-03:
-      #     FAIL bread0/rlht0 set_open_duty_pct
-      #          Argument 'duty1_pct': Type mismatch: expected uint64, got int64
-      #
-      # Add the two rlht0 calls (set_mode open_loop, then set_open_duty_pct 0/0 —
-      # mode first, or a closed-loop PID keeps driving the relay) once #252 lands.
-      # This rig has no heater load connected, so the gap is currently inert.
+      # The heater (bread0/rlht0): three calls, each one safe if another is
+      # lost. set_setpoints 0/0 turns a closed-loop heater off on Slice_RLHT
+      # firmware from 16a04dd on, where a setpoint <= 0 means off; on earlier
+      # firmware the PID keeps its stored output term, so it does not reliably
+      # zero the duty, and only the two calls after it do. Mode goes before
+      # duty because the slice ignores set_open_duty_pct in closed loop; between
+      # them the heater holds its last PID duty. A failed call is retried by the
+      # provider, and if the slice drops off the bus its command watchdog
+      # (command_watchdog_ms in the provider config) opens both relays. A call
+      # reported OK can still be lost on the slice (feastorg/Slice_RLHT#14), so
+      # read rlht0 back after an e-stop. The zero setpoints persist: closed-loop
+      # heating does not resume until a setpoint is set again. Needs
+      # anolis >= 0.1.41, which resolves uint64 hook arguments
+      # (anolishq/anolis#252).
+      - device_handle: bread0/rlht0
+        function_name: set_setpoints
+        args:
+          setpoint1_c: 0.0
+          setpoint2_c: 0.0
+      - device_handle: bread0/rlht0
+        function_name: set_mode
+        args:
+          mode: open_loop
+      - device_handle: bread0/rlht0
+        function_name: set_open_duty_pct
+        args:
+          duty1_pct: 0
+          duty2_pct: 0
 
 logging:
   level: info
