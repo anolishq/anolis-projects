@@ -36,37 +36,53 @@ in a browser); you operate the runtime over **loopback**, so no tokens/SSH.
 
 ---
 
-## 0. Prerequisites + get these files onto the Pi
+## 0. Prerequisites, host prep, and these files on the Pi
 
-Raspberry Pi OS Bookworm (desktop, so you have a browser). Hardware already wired:
-bread + ezo on I²C bus 1 at `0x0A, 0x14, 0x15, 0x61, 0x63`.
+64-bit Raspberry Pi OS based on **Debian 13 (Trixie)**, desktop (so you have a
+browser), on a Raspberry Pi 4. The released binaries need glibc 2.38 or newer, so a
+Bookworm (Debian 12, glibc 2.36) image cannot run them; `install.sh` stops with the
+loader's message if you try. Hardware already wired: bread + ezo on I²C bus 1 at
+`0x0A, 0x14, 0x15, 0x61, 0x63`.
 
 ```bash
 sudo apt update && sudo apt install -y i2c-tools git curl
-sudo raspi-config nonint do_i2c 0          # enable I²C (0 = enable) — REQUIRED, see below
-i2cdetect -y 1                             # EXPECT: 0a 14 15 61 63 (0x76 = non-anolis, ignore)
 
-# Clone this project — it carries this guide, the bootstrap script, and the config:
+# Clone this project — it carries this guide, the host prep, and the config:
 mkdir -p ~/anolis && cd ~/anolis
 git clone --depth 1 https://github.com/anolishq/anolis-projects.git
 export PROJ=~/anolis/anolis-projects/projects/bioreactor-v1
+
+# Host prep: I²C on, the 50 kHz bus clock with the core clock pinned, i2c-dev,
+# and the anolis user with access to the bus. Safe to re-run.
+sudo bash "$PROJ/host/prep-raspberrypi-os.sh"
+sudo reboot                                # only if it printed REBOOT REQUIRED
 ```
 
-- [ ] `i2cdetect` shows **0a 14 15 61 63** — if any are missing, fix wiring/power
-      before continuing (a missing address = a silently-excluded device later).
+After the reboot:
 
-> **Keep the `raspi-config` line.** `install.sh` has enabled I²C itself since
-> anolis v0.1.41 (anolishq/anolis#249), but `i2cdetect` above needs the bus
-> before the install runs.
->
-> Symptom if the bus is missing, visible only in the journal:
-> `failed to open I2C bus '/dev/i2c-1': No such file or directory`
+```bash
+export PROJ=~/anolis/anolis-projects/projects/bioreactor-v1
+sudo bash "$PROJ/host/prep-raspberrypi-os.sh" --check   # EXPECT: host prep: nothing to do
+i2cdetect -y 1                                          # EXPECT: 0a 14 15 61 63 (0x76 = non-anolis, ignore)
+```
+
+- [ ] `--check` reports nothing to do, and `i2cdetect` shows **0a 14 15 61 63** —
+      if any address is missing, fix wiring/power before continuing (a missing
+      address = a silently-excluded device later).
+
+> **Why host prep exists.** anolis deploys software and does not set up the
+> host's hardware (anolishq/anolis#318). The script sets three `config.txt` lines
+> this machine needs: `dtparam=i2c_arm=on`, `dtparam=i2c_arm_baudrate=50000` and
+> `core_freq_min=500`. On a Pi 4 the I²C clock follows the VPU core clock, so
+> without the pin the configured rate is only a ceiling. The gen1 slices lost
+> retried writes at 98 kHz and returned corrupted reads at 66–79 kHz; 49.7 kHz
+> was clean (feastorg/CRUMBS#97).
 
 ## 1. Install + launch the workbench (on the Pi)
 
 There is no Pi desktop installer; the workbench runs as a local server you open in
-a browser. The bootstrap installs it into an isolated venv (Bookworm blocks bare
-`pip install`) from the pure-python PyPI wheel:
+a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
+bare `pip install`) from the pure-python PyPI wheel:
 
 ```bash
 bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + launches; browser opens at :3010
@@ -91,13 +107,22 @@ bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + launches; browser op
 
 ```bash
 cd ~/anolis
-curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.40/install.sh
+curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.43/install.sh
 sudo bash install.sh --project "$PROJ" --variant manual --with-observability 2>&1 | tee ~/anolis/install.log
 echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 ```
 
 - [ ] install exits **0** ("Anolis installation complete"); it pins runtime
-      0.1.40 / bread 0.3.8 / ezo 0.3.4 and starts one `anolis-runtime.service`.
+      0.1.43 / bread 0.5.0 / ezo 0.4.0 and starts one `anolis-runtime.service`.
+- [ ] the **host preflight** lines read `✓ host preflight: bread0: host
+      requirements met` and the same for `ezo0`.
+
+> **Before anything starts, `install.sh` checks the host.** As `anolis` it runs
+> every binary and asks each provider what it needs (`--check-host`): the bus
+> node present and openable, and for bread the bus clock at or under 50 kHz. If
+> something is unmet it stops and prints the fix — usually: re-run host prep and
+> reboot. `--allow-unmet-host` installs anyway; those providers then start with no
+> devices until the host is fixed and the service restarted.
 
 > **Read the exit code, not the banner.** `install.sh` prints a large
 > "Anolis installation complete" box *before* reporting failure, so a failed
@@ -130,7 +155,7 @@ sudo systemctl restart anolis-runtime
 ## 4. Verify bring-up
 
 ```bash
-curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.40, mode IDLE, 5 devices
+curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.43, mode IDLE, 5 devices
 curl -fsS localhost:8080/v0/providers/health | python3 -c "
 import json,sys
 for p in json.load(sys.stdin)['providers']:
@@ -210,14 +235,16 @@ curl -s -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{
 
 This exact sequence reproduces on the second reactor **unchanged** — same
 addresses, same profile, same steps. It IS the template. Four rough edges to warn
-them about, all tracked:
+them about:
 
 | Where | Rough edge | Tracked as |
 |---|---|---|
-| §0 | `install.sh` does not actually enable I²C on a Pi with HDMI — enable it by hand | anolishq/anolis#249 |
+| §0 | host prep comes before `install.sh`, and may need a reboot; `install.sh` no longer touches `config.txt` | anolishq/anolis#318 |
 | §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#249 |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
 | §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required, and only fixes Operate's data, not its chrome | anolishq/anolis-workbench#277 |
 
 Last walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).
+This revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0) has not yet
+been walked end-to-end on a fresh card.
