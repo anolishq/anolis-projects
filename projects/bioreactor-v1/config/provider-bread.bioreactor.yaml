@@ -2,14 +2,19 @@ provider:
   name: bread0
 
 hardware:
-  # bread 0.3.0 removed `require_live_session` and rejects it as an unknown key.
-  # The same intent is now carried by bus_path: a real path opens a live CRUMBS
-  # session and startup throws if the bus cannot be opened (a mock:// path would
-  # seed an inventory instead).
+  # A real path opens a live CRUMBS session; a mock:// path would seed an
+  # inventory instead. If the host cannot serve the bus (a requirement below is
+  # unmet, or the bus will not open), bread >= 0.5.0 stays up with no devices
+  # and reports why in provider health instead of exiting.
   bus_path: /dev/i2c-1
   query_delay_us: 15000
   timeout_ms: 150
   retry_count: 3
+  # The gen1 AVR slices on a Pi 4 lose retried writes at 98 kHz and corrupt
+  # reads at 66-79 kHz; 49.7 kHz is clean (feastorg/CRUMBS#97). bread's
+  # --check-host and startup compare this with the bus's configured clock;
+  # host/prep-raspberrypi-os.sh sets it.
+  max_bus_hz: 50000
 
 discovery:
   mode: manual

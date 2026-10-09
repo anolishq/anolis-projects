@@ -34,4 +34,6 @@ two independent periodic dosing schedules with configurable timing parameters.
 
 ## Quick start
 
-See [docs/runbook.md](docs/runbook.md) for the full setup and launch sequence.
+To install on a Pi as an appliance, follow [docs/quickstart-on-pi.md](docs/quickstart-on-pi.md):
+host prep (`host/prep-raspberrypi-os.sh`), then anolis's `install.sh`. For running
+from sibling source builds, see [docs/runbook.md](docs/runbook.md).

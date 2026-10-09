@@ -10,7 +10,9 @@
 | ezo0   | ph0    | Atlas EZO-pH                         | 0x63        |
 | ezo0   | do0    | Atlas EZO-DO                         | 0x61        |
 
-- **Bus**: Raspberry Pi `/dev/i2c-1`
+- **Bus**: Raspberry Pi `/dev/i2c-1`, at 50 kHz with the core clock pinned. Run
+  `host/prep-raspberrypi-os.sh` once on a new Pi (and reboot if it says so) before
+  launching anything; `--check` reports without changing.
 - **bread0**: CRUMBS controller — bread provider on I²C bus
 - **ezo0**: EZO shield in I²C mode — ezo provider on the same bus
 
