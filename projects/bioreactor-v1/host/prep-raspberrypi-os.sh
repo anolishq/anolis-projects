@@ -17,10 +17,15 @@
 # Idempotent: a second run changes nothing. install.sh's preflight then checks
 # the result through each provider's --check-host.
 #
+# When a reboot is needed it also writes /run/reboot-required, the Debian
+# convention that tools (the anolis workbench among them) read to say a reboot
+# is pending. /run is tmpfs, so the reboot clears it.
+#
 # Usage: sudo ./prep-raspberrypi-os.sh [--check]
 #   --check   report what is missing and change nothing; exit 1 if anything is.
 #
-# Overridable for testing: CONFIG_TXT, MODULES_LOAD_DIR, I2C_NODE, ANOLIS_PREFIX.
+# Overridable for testing: CONFIG_TXT, MODULES_LOAD_DIR, I2C_NODE, ANOLIS_PREFIX,
+# REBOOT_FLAG.
 
 set -euo pipefail
 
@@ -28,6 +33,7 @@ readonly ANOLIS_USER="anolis"
 readonly ANOLIS_PREFIX="${ANOLIS_PREFIX:-/opt/anolis}"
 readonly I2C_NODE="${I2C_NODE:-/dev/i2c-1}"
 readonly MODULES_LOAD_DIR="${MODULES_LOAD_DIR:-/etc/modules-load.d}"
+readonly REBOOT_FLAG="${REBOOT_FLAG:-/run/reboot-required}"
 # This machine's config.txt lines: key -> value.
 readonly -a CONFIG_KEYS=("dtparam=i2c_arm" "dtparam=i2c_arm_baudrate" "core_freq_min")
 readonly -a CONFIG_VALUES=("on" "50000" "500")
@@ -187,6 +193,7 @@ if [[ ${CHECK} -eq 1 ]]; then
 fi
 [[ ${CHANGED} -eq 1 ]] || echo "host prep: nothing to do"
 if [[ ${REBOOT} -eq 1 ]]; then
+    echo '*** System restart required ***' > "${REBOOT_FLAG}"
     echo "REBOOT REQUIRED before installing: sudo reboot"
 elif [[ ${CHANGED} -eq 1 ]]; then
     echo "host prep done; if anolis is already installed, restart it: sudo systemctl restart anolis-runtime"
