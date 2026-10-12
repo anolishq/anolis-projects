@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
 # install-workbench-pi.sh — one-shot bootstrap for the anolis-workbench on a
-# fresh Raspberry Pi OS (Bookworm). The workbench has no ARM desktop build, so
-# on the Pi it runs as a local Python server you reach in a browser at :3010.
+# fresh Raspberry Pi OS (Debian 13, Trixie). The workbench has no ARM desktop
+# build, so on the Pi it runs as a local Python server you reach in a browser at
+# :3010.
 #
-# It installs into an isolated venv (Bookworm marks the system Python
+# It installs into an isolated venv (Raspberry Pi OS marks the system Python
 # "externally managed" — PEP 668 — so a bare `pip install` is refused), from the
 # pure-python wheel published on PyPI (`anolis_workbench-<ver>-py3-none-any`).
 #
