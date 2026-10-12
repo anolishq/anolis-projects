@@ -44,6 +44,17 @@ Bookworm (Debian 12, glibc 2.36) image cannot run them; `install.sh` stops with 
 loader's message if you try. Hardware already wired: bread + ezo on I²C bus 1 at
 `0x0A, 0x14, 0x15, 0x61, 0x63`.
 
+**Slice firmware.** Flash each Slice from the `main` branch of its repository
+(feastorg/Slice_RLHT, feastorg/Slice_DCMT), from `firmware/`, with the gen1
+environment: `pio run -e gen1_nano -t upload`. The RLHT defaults to 0x0A and the
+DCMT to 0x15. Build the DCMT that goes at 0x14 with
+`PLATFORMIO_BUILD_FLAGS=-DI2C_ADR=20`, and make sure the variable is unset for
+the others. Two DCMTs on one address collide on the bus. The board generation
+is a build flag and cannot be read over the bus, so check the environment before
+you flash. Unplug the USB cable afterwards. A laptop left on a Slice's USB port
+powers it, so a backplane power cut does not stop that board; this was seen on the
+RLHT.
+
 ```bash
 sudo apt update && sudo apt install -y i2c-tools git curl
 
@@ -70,6 +81,20 @@ i2cdetect -y 1                                          # EXPECT: 0a 14 15 61 63
       if any address is missing, fix wiring/power before continuing (a missing
       address = a silently-excluded device later).
 
+The DO circuit reports mg/L only out of the box, and this project also reads %
+saturation. Turn that output on once; the circuit stores it across power
+cycles. Each command is written, then its reply read about 0.6 s later:
+
+```bash
+sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r20@0x61              # O,?
+sudo i2ctransfer -y 1 w5@0x61 0x4f 0x2c 0x25 0x2c 0x31; sleep 0.6; sudo i2ctransfer -y 1 r20@0x61    # O,%,1
+sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r20@0x61              # O,?
+```
+
+- [ ] The last reply starts `0x01 0x3f 0x4f 0x2c 0x4d 0x47 0x2c 0x25`
+      (`?O,MG,%`). Without the `%` output, `do_saturation_pct` reads
+      `UNAVAILABLE`.
+
 > **Why host prep exists.** anolis deploys software and does not set up the
 > host's hardware (anolishq/anolis#318). The script sets three `config.txt` lines
 > this machine needs: `dtparam=i2c_arm=on`, `dtparam=i2c_arm_baudrate=50000` and
@@ -88,6 +113,10 @@ bare `pip install`) from the pure-python PyPI wheel:
 bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + launches; browser opens at :3010
 # later:  anolis-workbench                      # (then open http://127.0.0.1:3010)
 ```
+
+The launch opens a browser on the Pi's desktop and keeps the terminal. Over SSH,
+run the script with `--no-launch`, then start `anolis-workbench` from the
+desktop session.
 
 - [ ] Workbench UI loads at **http://127.0.0.1:3010**.
 
@@ -116,6 +145,14 @@ echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
       0.1.43 / bread 0.5.0 / ezo 0.4.0 and starts one `anolis-runtime.service`.
 - [ ] the **host preflight** lines read `✓ host preflight: bread0: host
       requirements met` and the same for `ezo0`.
+
+> **The install renames the Pi** to `anolis-` plus the last eight characters of
+> its serial number (`✓ hostname: anolis-…`). Reconnect by the new name or by IP
+> address.
+>
+> **`⚠ observability: grafana health check timed out`** can appear on a first
+> install while Grafana is still starting. `curl -fsS localhost:3000/api/health`
+> reporting `"database": "ok"` afterwards means it came up.
 
 > **Before anything starts, `install.sh` checks the host.** As `anolis` it runs
 > every binary and asks each provider what it needs (`--check-host`): the bus
@@ -166,6 +203,12 @@ for p in json.load(sys.stdin)['providers']:
 
 - [ ] 5/5 devices, both providers **AVAILABLE**, `io_failed` low/flat, watchdogs
       not tripped.
+- [ ] `rlht0`'s `t1_c` reads room temperature. Exactly `0.0` with quality OK means
+      the thermocouple is not reading: check the connector and polarity, then
+      warm the junction with your fingers and watch it climb. A thermocouple
+      channel with nothing fitted reads quality `FAULT` (open circuit), and that
+      makes `rlht0`'s health `FAULT` even when the fitted channel is fine
+      (anolishq/anolis#325).
 - [ ] **Grafana** at `http://<pi-ip>:3000` (default admin login — change it); the
       `io-health` + `signal-history` dashboards show live data.
 
@@ -177,6 +220,11 @@ runtime on loopback (no token needed — loopback is auth-exempt). Launch it wit
 ```bash
 ANOLIS_WORKBENCH_RUNTIME_URL=http://127.0.0.1:8080 anolis-workbench
 ```
+
+The Compose, Commission and Operate tabs stay disabled until a project is open.
+On the home page, under **Import Machine Profile**, enter the project directory
+(the value of `$PROJ`, e.g. `/home/<you>/anolis/anolis-projects/projects/bioreactor-v1`)
+and import it. The workbench opens the project; then choose **Operate**.
 
 In **Operate** you get: the mode ladder, live signal tables (pH, DO, temp, motor
 state), device health, parameter get/set (min/max honored), device-function
@@ -198,6 +246,8 @@ the embedded Grafana panel.
 > keyed on that (the not-running banner, active-project display, and the #264
 > logic that hides the E-stop when a *different* project is running) stays wrong.
 > Treat Operate's data as trustworthy and its chrome as not, until #277 lands.
+> On 2026-10-12 (workbench 0.14.0) this held only until the project was imported:
+> after the import the header read `Running: bioreactor-v1`.
 
 ## 6. Run the experiment (follow the actuation runbook)
 
@@ -234,17 +284,22 @@ curl -s -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{
 ### Notes for the second (identical) reactor / novice handoff
 
 This exact sequence reproduces on the second reactor **unchanged** — same
-addresses, same profile, same steps. It IS the template. Four rough edges to warn
+addresses, same profile, same steps. It IS the template. Rough edges to warn
 them about:
 
 | Where | Rough edge | Tracked as |
 |---|---|---|
 | §0 | host prep comes before `install.sh`, and may need a reboot; `install.sh` no longer touches `config.txt` | anolishq/anolis#318 |
+| §0 | the DO circuit's % saturation output is off out of the box; turn it on before installing | — |
 | §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#249 |
+| §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
-| §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required, and only fixes Operate's data, not its chrome | anolishq/anolis-workbench#277 |
+| §4 | an RLHT thermocouple channel with nothing fitted makes `rlht0`'s health FAULT | anolishq/anolis#325 |
+| §5 | Operate is disabled until the project is imported | — |
+| §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required for Operate's data | anolishq/anolis-workbench#277 |
 
-Last walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
+Walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).
-This revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0) has not yet
-been walked end-to-end on a fresh card.
+This revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0) was walked
+through §5 on a fresh card on **2026-10-12**, with workbench 0.14.0 and nothing
+actuated; §6 and §7 were not run.
