@@ -136,13 +136,13 @@ desktop session.
 
 ```bash
 cd ~/anolis
-curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.43/install.sh
+curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.44/install.sh
 sudo bash install.sh --project "$PROJ" --variant manual --with-observability 2>&1 | tee ~/anolis/install.log
 echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 ```
 
 - [ ] install exits **0** ("Anolis installation complete"); it pins runtime
-      0.1.43 / bread 0.5.0 / ezo 0.4.0 and starts one `anolis-runtime.service`.
+      0.1.44 / bread 0.5.1 / ezo 0.4.0 and starts one `anolis-runtime.service`.
 - [ ] the **host preflight** lines read `✓ host preflight: bread0: host
       requirements met` and the same for `ezo0`.
 
@@ -192,7 +192,7 @@ sudo systemctl restart anolis-runtime
 ## 4. Verify bring-up
 
 ```bash
-curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.43, mode IDLE, 5 devices
+curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.44, mode IDLE, 5 devices
 curl -fsS localhost:8080/v0/providers/health | python3 -c "
 import json,sys
 for p in json.load(sys.stdin)['providers']:
