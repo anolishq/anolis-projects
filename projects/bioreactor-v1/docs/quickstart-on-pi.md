@@ -22,10 +22,11 @@ in a browser); you operate the runtime over **loopback**, so no tokens/SSH.
 >   **not** restart anything, and it cannot help if the runtime itself is wedged.
 >   Verified on hardware 2026-08-03: with a safe state declared, pressing it
 >   stopped a running impeller.
-> - **The heater is not covered by the software safe state** (`bread0/rlht0`).
->   Its only actuating function takes `uint64` arguments, which a hook cannot
->   currently express — see anolishq/anolis#252. If you connect a heater load,
->   the backplane cut is its only stop.
+> - **The heater (`bread0/rlht0`) is turned off by the software safe state**
+>   and, in the `automation`/`full` variants only, by the `MANUAL→IDLE` hook.
+>   A call reported OK is a frame sent, not one applied
+>   (anolishq/anolis-provider-bread#134), so read `rlht0` back after entering
+>   IDLE. The backplane cut remains its emergency stop.
 > - Mode ladder is strict: **IDLE → MANUAL → AUTO**. To stop, descend
 >   **AUTO → MANUAL → IDLE** — the AUTO→MANUAL transition is what zeros the motors.
 >   `AUTO → IDLE` directly is invalid.
