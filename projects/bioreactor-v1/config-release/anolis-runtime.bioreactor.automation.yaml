@@ -141,6 +141,10 @@ automation:
     before_transition:
       - from: AUTO
         to: MANUAL
+        # Stops the motors the behavior tree drives (dcmt0, dcmt1). The heater
+        # (rlht0) is left alone: automation never drives it, so leaving AUTO has
+        # nothing of automation's to undo, and cutting heat on a routine hand-off
+        # would cool the culture. It holds in MANUAL, under operator control.
         fail_on_error: true
         calls:
           - device_handle: bread0/dcmt0
@@ -163,6 +167,11 @@ automation:
               motor2_pwm: 0
       - from: MANUAL
         to: IDLE
+        # IDLE blocks control calls, so an output left on here cannot be
+        # corrected without leaving IDLE, and Slice_RLHT has no over-temperature
+        # cutoff of its own. Stop the motors and turn the heater off with the
+        # same three rlht0 calls as safety.safe_state below, whose comment says
+        # why there are three and why they run in this order.
         fail_on_error: true
         calls:
           - device_handle: bread0/dcmt0
@@ -183,9 +192,25 @@ automation:
             args:
               motor1_pwm: 0
               motor2_pwm: 0
+          - device_handle: bread0/rlht0
+            function_name: set_setpoints
+            args:
+              setpoint1_c: 0.0
+              setpoint2_c: 0.0
+          - device_handle: bread0/rlht0
+            function_name: set_mode
+            args:
+              mode: open_loop
+          - device_handle: bread0/rlht0
+            function_name: set_open_duty_pct
+            args:
+              duty1_pct: 0
+              duty2_pct: 0
       - from: "*"
         to: FAULT
         # FAULT is fail-safe: best-effort output writes, never block FAULT entry.
+        # Stops the motors. The heater is left alone: FAULT still allows control
+        # calls, so the operator can turn it off from here.
         fail_on_error: false
         calls:
           - device_handle: bread0/dcmt0
