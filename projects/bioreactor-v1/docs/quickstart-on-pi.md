@@ -203,13 +203,10 @@ for p in json.load(sys.stdin)['providers']:
 ```
 
 - [ ] 5/5 devices, both providers **AVAILABLE**, `io_failed` low/flat, watchdogs
-      not tripped.
+      not tripped, every device's health **OK**.
 - [ ] `rlht0`'s `t1_c` reads room temperature. Exactly `0.0` with quality OK means
       the thermocouple is not reading: check the connector and polarity, then
-      warm the junction with your fingers and watch it climb. A thermocouple
-      channel with nothing fitted reads quality `FAULT` (open circuit), and that
-      makes `rlht0`'s health `FAULT` even when the fitted channel is fine
-      (anolishq/anolis#325).
+      warm the junction with your fingers and watch it climb.
 - [ ] **Grafana** binds `127.0.0.1:3000` on the Pi. From your machine, open a
       tunnel with `ssh -L 3000:127.0.0.1:3000 <user>@<pi>` and browse
       `http://localhost:3000`; the `io-health` + `signal-history` dashboards
@@ -218,6 +215,15 @@ for p in json.load(sys.stdin)['providers']:
       `sudo grep GRAFANA_ADMIN_PASSWORD /etc/anolis/observability.env`).
       Adding `--with-grafana-network` to the §2 install line opens Grafana to
       the LAN instead.
+
+> **`rlht0`'s `t2_c` is left out of device health.** Only TC1 has a
+> thermocouple, and the empty TC2 reads quality `FAULT` (open circuit). The
+> runtime configs' `health.excluded_signals` drops `t2_c` from `rlht0`'s health,
+> so `rlht0` reads OK. `t2_c` is still read, served and recorded with its own
+> quality. If you fit a second thermocouple, delete the `bread0/rlht0` entry so a
+> fault on TC2 shows again. A misspelt entry excludes nothing: the runtime logs a
+> WARN naming it after discovery, and `rlht0` reads FAULT as before
+> (anolishq/anolis#325).
 
 ## 5. Operate from the workbench
 
@@ -301,7 +307,7 @@ them about:
 | §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#249 |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
-| §4 | an RLHT thermocouple channel with nothing fitted makes `rlht0`'s health FAULT | anolishq/anolis#325 |
+| §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
 | §5 | Operate is disabled until the project is imported | — |
 | §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required for Operate's data | anolishq/anolis-workbench#277 |
 

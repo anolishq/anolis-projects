@@ -40,6 +40,14 @@ providers:
 polling:
   interval_ms: 2500
 
+# Signals left out of device health. They are still polled, served over
+# HTTP and recorded; only the device health rollup skips them.
+health:
+  excluded_signals:
+    # Only TC1 has a thermocouple fitted; the empty TC2 channel reads FAULT.
+    - device_handle: bread0/rlht0
+      signals: [t2_c]
+
 telemetry:
   enabled: false
 
