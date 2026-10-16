@@ -47,9 +47,6 @@ health:
     # Only TC1 has a thermocouple fitted; the empty TC2 channel reads FAULT.
     - device_handle: bread0/rlht0
       signals: [t2_c]
-    # The DO % saturation output may be left off; it then reads UNKNOWN (stale).
-    - device_handle: ezo0/do0
-      signals: [do_saturation_pct]
 
 # Token comes from INFLUXDB_TOKEN in /etc/anolis/runtime.env (written by
 # install.sh --with-observability), never from this world-readable file.

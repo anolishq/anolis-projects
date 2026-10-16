@@ -94,8 +94,7 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 
 - [ ] The last reply starts `0x01 0x3f 0x4f 0x2c 0x4d 0x47 0x2c 0x25`
       (`?O,MG,%`). Without the `%` output, `do_saturation_pct` reads
-      `UNAVAILABLE`. The configs leave it out of `do0`'s health (§4), so
-      `do0` reads OK either way.
+      `UNAVAILABLE`.
 
 > **Why host prep exists.** anolis deploys software and does not set up the
 > host's hardware (anolishq/anolis#318). The script sets three `config.txt` lines
@@ -217,15 +216,13 @@ for p in json.load(sys.stdin)['providers']:
       Adding `--with-grafana-network` to the §2 install line opens Grafana to
       the LAN instead.
 
-> **Two signals are left out of device health.** The runtime configs'
-> `health.excluded_signals` drops `t2_c` from `rlht0` (only TC1 has a
-> thermocouple; the empty TC2 reads quality `FAULT`, open circuit) and
-> `do_saturation_pct` from `do0` (it reads `UNAVAILABLE` while the circuit's `%`
-> output is off). Both are still read, served and recorded with their own
-> quality; only the device's health ignores them. If you fit a second
-> thermocouple, delete the `bread0/rlht0` entry so a fault on TC2 shows again. A
-> misspelt entry excludes nothing: the runtime logs a WARN naming it after
-> discovery, and the device reads FAULT or STALE as before
+> **`rlht0`'s `t2_c` is left out of device health.** Only TC1 has a
+> thermocouple, and the empty TC2 reads quality `FAULT` (open circuit). The
+> runtime configs' `health.excluded_signals` drops `t2_c` from `rlht0`'s health,
+> so `rlht0` reads OK. `t2_c` is still read, served and recorded with its own
+> quality. If you fit a second thermocouple, delete the `bread0/rlht0` entry so a
+> fault on TC2 shows again. A misspelt entry excludes nothing: the runtime logs a
+> WARN naming it after discovery, and `rlht0` reads FAULT as before
 > (anolishq/anolis#325).
 
 ## 5. Operate from the workbench
@@ -310,7 +307,7 @@ them about:
 | §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#249 |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
-| §4 | `t2_c` and `do_saturation_pct` are left out of device health; delete the `rlht0` entry if a second thermocouple is fitted | anolishq/anolis#325 |
+| §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
 | §5 | Operate is disabled until the project is imported | — |
 | §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required for Operate's data | anolishq/anolis-workbench#277 |
 
