@@ -210,8 +210,14 @@ for p in json.load(sys.stdin)['providers']:
       channel with nothing fitted reads quality `FAULT` (open circuit), and that
       makes `rlht0`'s health `FAULT` even when the fitted channel is fine
       (anolishq/anolis#325).
-- [ ] **Grafana** at `http://<pi-ip>:3000` (default admin login — change it); the
-      `io-health` + `signal-history` dashboards show live data.
+- [ ] **Grafana** binds `127.0.0.1:3000` on the Pi. From your machine, open a
+      tunnel with `ssh -L 3000:127.0.0.1:3000 <user>@<pi>` and browse
+      `http://localhost:3000`; the `io-health` + `signal-history` dashboards
+      show live data. The `admin` password is `GRAFANA_ADMIN_PASSWORD` in
+      `/etc/anolis/observability.env` (root only:
+      `sudo grep GRAFANA_ADMIN_PASSWORD /etc/anolis/observability.env`).
+      Adding `--with-grafana-network` to the §2 install line opens Grafana to
+      the LAN instead.
 
 ## 5. Operate from the workbench
 
