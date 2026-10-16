@@ -9,13 +9,13 @@ hardware:
 
 discovery:
   mode: manual
-  addresses: [0x0A, 0x14, 0x15]
+  addresses: [0x13, 0x14, 0x15]
 
 devices:
   - id: rlht0
     type: rlht
     label: Reactor Left Heater 0
-    address: 0x0A
+    address: 0x13
   - id: dcmt0
     type: dcmt
     label: Reactor Feed Pumps

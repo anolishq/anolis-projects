@@ -43,11 +43,11 @@ in a browser); you operate the runtime over **loopback**, so no tokens/SSH.
 browser), on a Raspberry Pi 4. The released binaries need glibc 2.38 or newer, so a
 Bookworm (Debian 12, glibc 2.36) image cannot run them; `install.sh` stops with the
 loader's message if you try. Hardware already wired: bread + ezo on I²C bus 1 at
-`0x0A, 0x14, 0x15, 0x61, 0x63`.
+`0x13, 0x14, 0x15, 0x61, 0x63`.
 
 **Slice firmware.** Flash each Slice from the `main` branch of its repository
 (feastorg/Slice_RLHT, feastorg/Slice_DCMT), from `firmware/`, with the gen1
-environment: `pio run -e gen1_nano -t upload`. The RLHT defaults to 0x0A and the
+environment: `pio run -e gen1_nano -t upload`. The RLHT defaults to 0x13 and the
 DCMT to 0x15. Build the DCMT that goes at 0x14 with
 `PLATFORMIO_BUILD_FLAGS=-DI2C_ADR=20`, and make sure the variable is unset for
 the others. Two DCMTs on one address collide on the bus. The board generation
@@ -75,10 +75,10 @@ After the reboot:
 ```bash
 export PROJ=~/anolis/anolis-projects/projects/bioreactor-v1
 sudo bash "$PROJ/host/prep-raspberrypi-os.sh" --check   # EXPECT: host prep: nothing to do
-i2cdetect -y 1                                          # EXPECT: 0a 14 15 61 63 (0x76 = non-anolis, ignore)
+i2cdetect -y 1                                          # EXPECT: 13 14 15 61 63 (0x76 = non-anolis, ignore)
 ```
 
-- [ ] `--check` reports nothing to do, and `i2cdetect` shows **0a 14 15 61 63** —
+- [ ] `--check` reports nothing to do, and `i2cdetect` shows **13 14 15 61 63** —
       if any address is missing, fix wiring/power before continuing (a missing
       address = a silently-excluded device later).
 
