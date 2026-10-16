@@ -208,6 +208,14 @@ for p in json.load(sys.stdin)['providers']:
 - [ ] `rlht0`'s `t1_c` reads room temperature. Exactly `0.0` with quality OK means
       the thermocouple is not reading: check the connector and polarity, then
       warm the junction with your fingers and watch it climb.
+- [ ] **Grafana** binds `127.0.0.1:3000` on the Pi. From your machine, open a
+      tunnel with `ssh -L 3000:127.0.0.1:3000 <user>@<pi>` and browse
+      `http://localhost:3000`; the `io-health` + `signal-history` dashboards
+      show live data. The `admin` password is `GRAFANA_ADMIN_PASSWORD` in
+      `/etc/anolis/observability.env` (root only:
+      `sudo grep GRAFANA_ADMIN_PASSWORD /etc/anolis/observability.env`).
+      Adding `--with-grafana-network` to the §2 install line opens Grafana to
+      the LAN instead.
 
 > **Two signals are left out of device health.** The runtime configs'
 > `health.excluded_signals` drops `t2_c` from `rlht0` (only TC1 has a
@@ -219,8 +227,6 @@ for p in json.load(sys.stdin)['providers']:
 > misspelt entry excludes nothing: the runtime logs a WARN naming it after
 > discovery, and the device reads FAULT or STALE as before
 > (anolishq/anolis#325).
-- [ ] **Grafana** at `http://<pi-ip>:3000` (default admin login — change it); the
-      `io-health` + `signal-history` dashboards show live data.
 
 ## 5. Operate from the workbench
 
