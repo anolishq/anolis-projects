@@ -137,13 +137,13 @@ desktop session.
 
 ```bash
 cd ~/anolis
-curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.44/install.sh
+curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.45/install.sh
 sudo bash install.sh --project "$PROJ" --variant manual --with-observability 2>&1 | tee ~/anolis/install.log
 echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 ```
 
 - [ ] install exits **0** ("Anolis installation complete"); it pins runtime
-      0.1.44 / bread 0.5.1 / ezo 0.4.0 and starts one `anolis-runtime.service`.
+      0.1.45 / bread 0.5.2 / ezo 0.4.1 and starts one `anolis-runtime.service`.
 - [ ] the **host preflight** lines read `✓ host preflight: bread0: host
       requirements met` and the same for `ezo0`.
 
@@ -193,7 +193,7 @@ sudo systemctl restart anolis-runtime
 ## 4. Verify bring-up
 
 ```bash
-curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.44, mode IDLE, 5 devices
+curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.45, mode IDLE, 5 devices
 curl -fsS localhost:8080/v0/providers/health | python3 -c "
 import json,sys
 for p in json.load(sys.stdin)['providers']:
@@ -210,8 +210,14 @@ for p in json.load(sys.stdin)['providers']:
       channel with nothing fitted reads quality `FAULT` (open circuit), and that
       makes `rlht0`'s health `FAULT` even when the fitted channel is fine
       (anolishq/anolis#325).
-- [ ] **Grafana** at `http://<pi-ip>:3000` (default admin login — change it); the
-      `io-health` + `signal-history` dashboards show live data.
+- [ ] **Grafana** binds `127.0.0.1:3000` on the Pi. From your machine, open a
+      tunnel with `ssh -L 3000:127.0.0.1:3000 <user>@<pi>` and browse
+      `http://localhost:3000`; the `io-health` + `signal-history` dashboards
+      show live data. The `admin` password is `GRAFANA_ADMIN_PASSWORD` in
+      `/etc/anolis/observability.env` (root only:
+      `sudo grep GRAFANA_ADMIN_PASSWORD /etc/anolis/observability.env`).
+      Adding `--with-grafana-network` to the §2 install line opens Grafana to
+      the LAN instead.
 
 ## 5. Operate from the workbench
 

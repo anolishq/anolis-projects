@@ -42,14 +42,14 @@ safety:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.1.44"
+    version: "0.1.45"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.5.1"
+      version: "0.5.2"
     ezo:
       repo: anolishq/anolis-provider-ezo
-      version: "0.4.0"
+      version: "0.4.1"
   optional:
     telemetry_export:
       package: anolis-telemetry-export
