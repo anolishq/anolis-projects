@@ -7,7 +7,7 @@ dissolved oxygen sensing.
 
 | Provider | Device | Role |
 |---|---|---|
-| bread0 (CRUMBS) | rlht0 (0x0A) | Temperature + humidity |
+| bread0 (CRUMBS) | rlht0 (0x13) | Temperature + humidity |
 | bread0 (CRUMBS) | dcmt0 (0x14) | Sample pump (ch1), impeller/stirrer (ch2) |
 | bread0 (CRUMBS) | dcmt1 (0x15) | Dosing pump 1 (ch1), dosing pump 2 (ch2) |
 | ezo0 (EZO) | ph0 (0x63) | pH sensor |

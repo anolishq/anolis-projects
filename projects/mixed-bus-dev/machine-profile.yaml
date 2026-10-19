@@ -12,7 +12,7 @@ runtime_profiles:
 providers:
   bread0:
     config: config/provider-bread.yaml
-    notes: "CRUMBS bus devices: rlht0 (0x0A), dcmt0 (0x14), dcmt1 (0x15)"
+    notes: "CRUMBS bus devices: rlht0 (0x13), dcmt0 (0x14), dcmt1 (0x15)"
   ezo0:
     config: config/provider-ezo.yaml
     notes: "EZO sensors: ph0 (0x63), do0 (0x61)"

@@ -4,7 +4,7 @@
 
 | Slot   | Device | Type                                 | I²C address |
 | ------ | ------ | ------------------------------------ | ----------- |
-| bread0 | rlht0  | RLHT (temp + humidity)               | 0x0A        |
+| bread0 | rlht0  | RLHT (temp + humidity)               | 0x13        |
 | bread0 | dcmt0  | DCMT (sample pump ch1, impeller ch2) | 0x14        |
 | bread0 | dcmt1  | DCMT (dose1 ch1, dose2 ch2)          | 0x15        |
 | ezo0   | ph0    | Atlas EZO-pH                         | 0x63        |

@@ -12,7 +12,7 @@ live hardware (Linux) or the mock providers (Windows).
 1. `config/anolis-runtime.mixed.yaml`
    - Linux hardware validation profile.
    - Uses `provider-bread.yaml` + `provider-ezo.yaml`.
-   - Address map: RLHT `0x0A`, DCMT `0x14`, DCMT `0x15`, EZO pH `0x63`, EZO DO `0x61`.
+   - Address map: RLHT `0x13`, DCMT `0x14`, DCMT `0x15`, EZO pH `0x63`, EZO DO `0x61`.
    - Polling interval `2500ms`.
    - HTTP port `8080`.
    - Expected inventory: 5 devices (`rlht0`, `dcmt0`, `dcmt1`, `ph0`, `do0`).
