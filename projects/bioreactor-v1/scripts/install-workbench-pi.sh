@@ -16,7 +16,10 @@
 set -euo pipefail
 
 VENV="${HOME}/.local/share/anolis-workbench/venv"
-BIN_LINK="${HOME}/.local/bin/anolis-workbench"
+BIN_DIR="${HOME}/.local/bin"
+BIN_LINK="${BIN_DIR}/anolis-workbench"
+# Every command the anolis-workbench package installs.
+COMMANDS=(anolis-workbench anolis-provision anolis-package anolis-validate)
 LAUNCH=1
 [[ "${1:-}" == "--no-launch" ]] && LAUNCH=0
 
@@ -38,12 +41,21 @@ python3 -m venv "${VENV}"
 "${VENV}/bin/pip" install --quiet --upgrade pip
 warn "installing anolis-workbench from PyPI…"
 "${VENV}/bin/pip" install --quiet --upgrade anolis-workbench
-VER="$("${VENV}/bin/anolis-workbench" --version 2>/dev/null || echo '?')"
-log "anolis-workbench ${VER} installed at ${VENV}"
+# --version prints "anolis-workbench <version>".
+VER="$("${VENV}/bin/anolis-workbench" --version 2>/dev/null || echo 'anolis-workbench ?')"
+log "${VER} installed at ${VENV}"
 
-# 3. Put a launcher on PATH so the user can just type `anolis-workbench`.
-mkdir -p "$(dirname "${BIN_LINK}")"
-ln -sf "${VENV}/bin/anolis-workbench" "${BIN_LINK}"
+# 3. Put every command on PATH from this venv, so they are one install at one
+#    version. A pipx install of the workbench (its README's other route) links
+#    the same names into ~/.local/bin; these links replace them.
+mkdir -p "${BIN_DIR}"
+for cmd in "${COMMANDS[@]}"; do
+  ln -sf "${VENV}/bin/${cmd}" "${BIN_DIR}/${cmd}"
+done
+log "on PATH from this venv: ${COMMANDS[*]}"
+if command -v pipx >/dev/null && pipx list --short 2>/dev/null | grep -qE '^anolis-workbench( |$)'; then
+  warn "pipx also has anolis-workbench installed; ~/.local/bin now points at this venv. Remove the pipx copy with: pipx uninstall anolis-workbench"
+fi
 case ":${PATH}:" in
   *":${HOME}/.local/bin:"*) : ;;
   *) warn "add ~/.local/bin to PATH:  echo 'export PATH=\$HOME/.local/bin:\$PATH' >> ~/.bashrc && source ~/.bashrc" ;;

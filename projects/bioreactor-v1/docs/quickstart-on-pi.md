@@ -124,6 +124,13 @@ launch with `ANOLIS_WORKBENCH_OPEN_BROWSER=1`. Over SSH,
 run the script with `--no-launch`, then start `anolis-workbench` from the
 desktop session.
 
+The script puts all four of the package's commands on PATH from its venv:
+`anolis-workbench`, `anolis-provision`, `anolis-package` and `anolis-validate`.
+This guide expects that venv. If the workbench is also installed with `pipx`,
+the workbench README's other route, the script says so: remove that copy with
+`pipx uninstall anolis-workbench`, so one install at one version answers for
+all four.
+
 - [ ] Workbench UI loads at **http://127.0.0.1:3010**.
 
 ## 2. Provision the runtime + providers + observability
@@ -244,9 +251,13 @@ for p in json.load(sys.stdin)['providers']:
       the LAN instead.
 
 > **`rlht0`'s `t2_c` is left out of device health.** Only TC1 has a
-> thermocouple, and the empty TC2 reads quality `FAULT` (open circuit). The
-> runtime configs' `health.excluded_signals` drops `t2_c` from `rlht0`'s health,
-> so `rlht0` reads OK. `t2_c` is still read, served and recorded with its own
+> thermocouple. The empty TC2 reads one of two ways, depending on how it is
+> empty: quality `FAULT` when the MAX6675 sees an open probe, or `0.0` °C with
+> quality `OK` when its MISO line is stuck low (feastorg/Slice_RLHT#48). On
+> the reference rig it read `FAULT` on 2026-10-12, and `0.0` `OK` from
+> 2026-10-16. Neither is a temperature, so the runtime configs'
+> `health.excluded_signals` drops `t2_c` from `rlht0`'s health, and `rlht0`
+> reads OK. `t2_c` is still read, served and recorded with its own
 > quality. If you fit a second thermocouple, delete the `bread0/rlht0` entry so a
 > fault on TC2 shows again. A misspelt entry excludes nothing: the runtime logs a
 > WARN naming it after discovery, and `rlht0` reads FAULT as before
@@ -297,12 +308,13 @@ the embedded Grafana panel.
 > `Running: bioreactor-v1`. Another project's Operate view keeps the running
 > project's software stop reachable (#264).
 
-## 6. Run the experiment (follow the actuation runbook)
+## 6. Run the experiment
 
 Do the actual run — staged escalation, load checks, AUTO dosing — one stage at
 a time (single motor low-PWM → both → dosing channels → AUTO), with the
-parameters and defaults in [`runbook.md`](./runbook.md). In brief, the happy
-path:
+parameters and defaults in [`runbook.md`](./runbook.md). Check each stage's
+readings before the next, and at anything unexpected stop as §7 describes. In
+brief, the happy path:
 
 1. *(optional, for a provenance journal)* open a run: `POST /v0/runs {experiment_label,…}`.
 2. Set params one at a time (impeller/dosing) — `POST /v0/parameters {name,value}`.
