@@ -120,6 +120,13 @@ The launch opens a browser on the Pi's desktop and keeps the terminal. Over SSH,
 run the script with `--no-launch`, then start `anolis-workbench` from the
 desktop session.
 
+The script puts all four of the package's commands on PATH from its venv:
+`anolis-workbench`, `anolis-provision`, `anolis-package` and `anolis-validate`.
+This guide expects that venv. If the workbench is also installed with `pipx`,
+the workbench README's other route, the script says so: remove that copy with
+`pipx uninstall anolis-workbench`, so one install at one version answers for
+all four.
+
 - [ ] Workbench UI loads at **http://127.0.0.1:3010**.
 
 ## 2. Provision the runtime + providers + observability
