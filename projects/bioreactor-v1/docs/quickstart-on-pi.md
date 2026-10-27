@@ -3,7 +3,8 @@
 **Audience:** operator sitting at the Pi. **Outcome:** anolis running the
 bioreactor-v1 profile with observability, operated from the workbench, driving a
 real experiment safely. Topology: the workbench runs **on the Pi** (you reach it
-in a browser); you operate the runtime over **loopback**, so no tokens/SSH.
+in a browser); you operate the runtime over **loopback**, so no SSH. The
+runtime's API still needs its token (§4 shows how to send it).
 
 > ⚠️ **SAFETY FIRST — read before running any actuator (live culture!).**
 > - **Hardware e-stop within reach at all times.** On this rig it cuts backplane
@@ -135,15 +136,24 @@ desktop session.
 > config for live actuation through Compose until someone confirms the hooks and
 > the `safety:` block survive the round trip.
 
+The runtime version comes from the project itself, so this step never names one:
+`install.sh` is downloaded from the release `machine-profile.yaml` pins under
+`components.runtime`, and checked against that release's `SHA256SUMS`.
+
 ```bash
 cd ~/anolis
-curl -fsSLO https://github.com/anolishq/anolis/releases/download/v0.1.45/install.sh
+RT=$(awk '/^components:/{c=1} c && /^  runtime:/{r=1} r && /version:/{gsub(/"/,"",$2); print $2; exit}' "$PROJ/machine-profile.yaml")
+echo "runtime pin: $RT"
+curl -fsSLO "https://github.com/anolishq/anolis/releases/download/v${RT}/install.sh"
+curl -fsSLO "https://github.com/anolishq/anolis/releases/download/v${RT}/SHA256SUMS"
+sha256sum -c --ignore-missing SHA256SUMS          # EXPECT: install.sh: OK
 sudo bash install.sh --project "$PROJ" --variant manual --with-observability 2>&1 | tee ~/anolis/install.log
 echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 ```
 
-- [ ] install exits **0** ("Anolis installation complete"); it pins runtime
-      0.1.45 / bread 0.5.2 / ezo 0.4.1 and starts one `anolis-runtime.service`.
+- [ ] install exits **0** ("Anolis installation complete"); it installs the
+      runtime and provider versions pinned under `components` in
+      `machine-profile.yaml` and starts one `anolis-runtime.service`.
 - [ ] the **host preflight** lines read `✓ host preflight: bread0: host
       requirements met` and the same for `ezo0`.
 
@@ -192,9 +202,22 @@ sudo systemctl restart anolis-runtime
 
 ## 4. Verify bring-up
 
+Every runtime call needs the API token, from the device itself too: since anolis
+0.1.48 loopback is not exempt, and a call without it gets `401`. `install.sh`
+keeps the token in `/etc/anolis/runtime.env` (root only). `anolis_api` reads it
+there and hands it to `curl` on stdin, so it never appears in a command line or
+in your shell history. Define it once per shell:
+
 ```bash
-curl -fsS localhost:8080/v0/runtime/status | python3 -m json.tool          # 0.1.45, mode IDLE, 5 devices
-curl -fsS localhost:8080/v0/providers/health | python3 -c "
+anolis_api() {
+  sudo sed -n 's/^ANOLIS_API_TOKEN=/Authorization: Bearer /p' /etc/anolis/runtime.env \
+    | curl -fsS -H @- "$@"
+}
+```
+
+```bash
+anolis_api localhost:8080/v0/runtime/status | python3 -m json.tool          # version = $RT, mode IDLE, 5 devices
+anolis_api localhost:8080/v0/providers/health | python3 -c "
 import json,sys
 for p in json.load(sys.stdin)['providers']:
     for d in p['devices']:
@@ -228,11 +251,18 @@ for p in json.load(sys.stdin)['providers']:
 ## 5. Operate from the workbench
 
 The workbench runs on the Pi; point its Operate view at the **provisioned**
-runtime on loopback (no token needed — loopback is auth-exempt). Launch it with:
+runtime on loopback, with the runtime's token. With `ANOLIS_WORKBENCH_RUNTIME_URL`
+set, the workbench sends only a token given in `ANOLIS_WORKBENCH_RUNTIME_TOKEN`.
+Without it, Operate's runtime calls get `401`. Launch it with:
 
 ```bash
-ANOLIS_WORKBENCH_RUNTIME_URL=http://127.0.0.1:8080 anolis-workbench
+ANOLIS_WORKBENCH_RUNTIME_URL=http://127.0.0.1:8080 \
+ANOLIS_WORKBENCH_RUNTIME_TOKEN="$(sudo sed -n 's/^ANOLIS_API_TOKEN=//p' /etc/anolis/runtime.env)" \
+  anolis-workbench
 ```
+
+The token is read into the workbench's environment, never into a command line
+or your shell history.
 
 The Compose, Commission and Operate tabs stay disabled until a project is open.
 On the home page, under **Import Machine Profile**, enter the project directory
@@ -279,14 +309,15 @@ shapes. In brief, the happy path:
 
 ```bash
 # 1. disable behavior outputs while still in AUTO (tree zeroes on next tick):
+# (anolis_api from §4: the token goes to curl on stdin)
 for p in impeller_enable dose1_enable dose2_enable; do
-  curl -s -X POST localhost:8080/v0/parameters -H 'content-type: application/json' -d "{\"name\":\"$p\",\"value\":false}"; done
+  anolis_api -X POST localhost:8080/v0/parameters -H 'content-type: application/json' -d "{\"name\":\"$p\",\"value\":false}"; done
 sleep 3
 # 2. AUTO → MANUAL — the safe-state hooks fire HERE and zero both DCMTs:
-curl -s -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{"mode":"MANUAL"}'
+anolis_api -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{"mode":"MANUAL"}'
 journalctl -u anolis-runtime -n 20 --no-pager | grep "transition hook"   # expect the hook-OK lines
 # 3. MANUAL → IDLE:
-curl -s -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{"mode":"IDLE"}'
+anolis_api -X POST localhost:8080/v0/mode -H 'content-type: application/json' -d '{"mode":"IDLE"}'
 # 4. (if a run was opened) close it: POST /v0/runs/{id}/close
 ```
 
