@@ -364,5 +364,7 @@ v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impell
 An earlier revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0, the RLHT
 at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbench
 0.14.0 and nothing actuated; §6 and §7 were not run. This revision (anolis
-0.1.56, bread 0.9.3, ezo 0.4.1, the RLHT at 0x13, token-authenticated calls) has
-not been walked on hardware.
+0.1.56, bread 0.9.3, ezo 0.4.1, the RLHT at 0x13, token-authenticated calls) had
+§2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade from
+anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with live data
+were not.
