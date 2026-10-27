@@ -113,16 +113,25 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `dose1_pwm`                 | int64 | 240     | Dose 1 PWM (0–255)                    |
 | `dose1_startup_delay_s`     | int64 | 60      | Delay before first dose 1 pulse       |
 | `dose1_interval_s`          | int64 | 900     | Interval between dose 1 pulses        |
-| `dose1_pulse_s`             | int64 | 5       | Duration of dose 1 pulse              |
+| `dose1_pulse_s`             | int64 | 5       | Duration of dose 1 pulse; must be less than `dose1_interval_s` |
 | `dose1_max_pulses_per_hour` | int64 | 0       | Rate cap for dose 1 (0 = unlimited)   |
 | `dose2_enable`              | bool  | false   | Enable dosing pump 2                  |
 | `dose2_pwm`                 | int64 | 240     | Dose 2 PWM (0–255)                    |
 | `dose2_startup_delay_s`     | int64 | 60      | Delay before first dose 2 pulse       |
 | `dose2_interval_s`          | int64 | 900     | Interval between dose 2 pulses        |
-| `dose2_pulse_s`             | int64 | 5       | Duration of dose 2 pulse              |
+| `dose2_pulse_s`             | int64 | 5       | Duration of dose 2 pulse; must be less than `dose2_interval_s` |
 | `dose2_max_pulses_per_hour` | int64 | 0       | Rate cap for dose 2 (0 = unlimited)   |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
+
+> **A dose pulse must be shorter than its interval.** Each parameter is checked
+> against its own range only, so `dose1_interval_s: 3` is accepted while
+> `dose1_pulse_s` is 5. The tree then turns that dose channel off, whether or
+> not it is enabled, and keeps writing the impeller and the other channel. The
+> runtime stays in AUTO, and logs `[PeriodicPulseWindowNode] Invalid scheduling
+> inputs` at ERROR every tick until the schedule is valid again
+> (anolishq/anolis-projects#103). `validation/check_invalid_dose_schedule.py`
+> checks this against a mock bread provider.
 
 > **Parameters are not persisted.** Every value above reverts to the default in
 > this table whenever the runtime restarts — including across an upgrade. A
