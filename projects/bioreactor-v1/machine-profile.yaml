@@ -19,20 +19,19 @@ providers:
 behaviors:
   - behaviors/bioreactor_stir_dual_dosing.xml
 
+# Required by the machine-profile schema; nothing acts on it. The versions
+# install.sh installs are the release pins under components below.
 compatibility:
   runtime:
     config_contract: "01-runtime-config"
     http_contract: "02-runtime-http"
-    notes: "Validated against anolis v0.1.5 contract gates."
   providers:
     bread0:
-      strategy: local-build
-      version: dev-release
-      notes: "Built from sibling anolis-provider-bread repo."
+      strategy: pinned-ref
+      version: "see components"
     ezo0:
-      strategy: local-build
-      version: dev-linux-hardware-release
-      notes: "Built from sibling anolis-provider-ezo repo."
+      strategy: pinned-ref
+      version: "see components"
 
 safety:
   estop_topology: power_cut
