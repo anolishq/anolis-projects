@@ -4,7 +4,7 @@
 
 | Slot   | Device | Type                                 | I²C address |
 | ------ | ------ | ------------------------------------ | ----------- |
-| bread0 | rlht0  | RLHT (temp + humidity)               | 0x13        |
+| bread0 | rlht0  | RLHT (relay heater + thermocouple temperature; TC1 only) | 0x13 |
 | bread0 | dcmt0  | DCMT (sample pump ch1, impeller ch2) | 0x14        |
 | bread0 | dcmt1  | DCMT (dose1 ch1, dose2 ch2)          | 0x15        |
 | ezo0   | ph0    | Atlas EZO-pH                         | 0x63        |
@@ -33,9 +33,9 @@ files reference provider executables and configs with `../` relative paths.
 
 See each provider repo's README for build instructions:
 
-- [anolis-provider-bread](../../../anolis-provider-bread/README.md)
-- [anolis-provider-ezo](../../../anolis-provider-ezo/README.md)
-- [anolis](../../../anolis/README.md)
+- [anolis-provider-bread](../../../../anolis-provider-bread/README.md)
+- [anolis-provider-ezo](../../../../anolis-provider-ezo/README.md)
+- [anolis](../../../../anolis/README.md)
 
 Target preset for hardware: `dev-release` (bread), `dev-linux-hardware-release` (ezo)
 
@@ -101,8 +101,9 @@ For a fresh Raspberry Pi (workbench-on-Pi + provisioning), follow
 
 ## Automation parameter reference
 
-All parameters are runtime-tunable via the workbench HTTP API or CLI after the
-system is running in `automation` or `full` mode.
+All parameters are runtime-tunable over HTTP (`POST /v0/parameters` on the
+runtime, directly or through the workbench and its `/v0` proxy) while running
+the `automation` or `full` profile; there is no dedicated CLI for them.
 
 | Parameter                   | Type  | Default | Description                           |
 | --------------------------- | ----- | ------- | ------------------------------------- |
@@ -125,21 +126,26 @@ system is running in `automation` or `full` mode.
 
 > **Parameters are not persisted.** Every value above reverts to the default in
 > this table whenever the runtime restarts — including across an upgrade. A
-> setting you changed during a run is gone after a restart, and nothing
-> announces the revert. Re-apply anything you tuned before re-enabling
+> setting you changed during a run is gone after a restart. At startup the
+> runtime logs `[Runtime] Parameter '<name>' at config default <value>` for each
+> parameter, and `GET /v0/parameters` reports `source: "default"` for every
+> value not set since the restart. Re-apply anything you tuned before re-enabling
 > actuation, and treat the defaults as what the machine will actually do the
 > moment it comes back.
 >
-> The *current* value is visible, though — the behaviour tree logs each
-> parameter it reads on every tick:
+> The *current* value of every parameter, and whether it is a default or an
+> operator value, is in `GET /v0/parameters`. While in AUTO, the behaviour tree
+> also logs the three numeric parameters it reads with `GetParameter`
+> (`impeller_pwm`, `dose1_pwm`, `dose2_pwm`) on every tick; parameters read
+> with `GetParameterBool` or `GetParameterInt64` are not logged:
 >
 > ```
 > journalctl -u anolis-runtime -f | grep GetParameterNode
 > # [GetParameterNode] Read parameter 'impeller_pwm' = 100
 > ```
 >
-> At `tick_rate_hz: 2` that is twice a second, so it is the fastest way to
-> confirm what the machine is actually running on after any restart.
+> At `tick_rate_hz: 2` that is twice a second. No `GetParameterNode` line is
+> logged after a restart until an operator enters AUTO.
 
 ## DCMT channel map
 

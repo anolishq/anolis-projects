@@ -43,7 +43,7 @@ live hardware (Linux) or the mock providers (Windows).
 
 Build all three repos before validation so runtime command paths exist.
 
-### Linux/macOS
+### Linux
 
 ```bash
 cd /path/to/anolis
@@ -51,8 +51,8 @@ cmake --preset dev-release
 cmake --build --preset dev-release
 
 cd /path/to/anolis-provider-bread
-cmake --preset dev-linux-hardware-release
-cmake --build --preset dev-linux-hardware-release
+cmake --preset dev-release
+cmake --build --preset dev-release
 
 cd /path/to/anolis-provider-ezo
 cmake --preset dev-linux-hardware-release
@@ -115,8 +115,8 @@ Expected:
 
 1. Runtime startup fails before steady state.
 2. Error includes:
-   - `I2C ownership validation failed`
-   - `duplicate ownership for bus='mock://mixed-bus-conflict' addr='0x63'`
+   - `Ownership validation failed`
+   - `claim 'i2c:mock://mixed-bus-conflict:0x63' held by bread0/rlht_conflict, ezo0/ph_conflict`
    - conflicting owners `bread0/rlht_conflict` and `ezo0/ph_conflict`
 3. Exit code is non-zero.
 
@@ -142,6 +142,6 @@ cd /path/to/anolis
 
 Expected:
 
-1. Runtime and both providers are `AVAILABLE`.
+1. All four endpoints return status `OK`, and both providers report state `AVAILABLE`.
 2. Inventory includes 5 devices.
 3. Script exits `0` and writes artifacts.

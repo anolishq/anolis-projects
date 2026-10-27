@@ -7,7 +7,7 @@ dissolved oxygen sensing.
 
 | Provider | Device | Role |
 |---|---|---|
-| bread0 (CRUMBS) | rlht0 (0x13) | Temperature + humidity |
+| bread0 (CRUMBS) | rlht0 (0x13) | Temperature (thermocouple inputs, relay heater control) |
 | bread0 (CRUMBS) | dcmt0 (0x14) | Sample pump (ch1), impeller/stirrer (ch2) |
 | bread0 (CRUMBS) | dcmt1 (0x15) | Dosing pump 1 (ch1), dosing pump 2 (ch2) |
 | ezo0 (EZO) | ph0 (0x63) | pH sensor |
@@ -24,12 +24,12 @@ board generation is a build flag and cannot be read over the bus.
 |---|---|---|---|
 | manual | ✗ | ✗ | `config/anolis-runtime.bioreactor.manual.yaml` |
 | telemetry | ✓ | ✗ | `config/anolis-runtime.bioreactor.telemetry.yaml` |
-| automation | ✗ | ✓ | `config/anolis-runtime.bioreactor.automation.yaml` |
+| automation | ✓ | ✓ | `config/anolis-runtime.bioreactor.automation.yaml` |
 | full | ✓ | ✓ | `config/anolis-runtime.bioreactor.full.yaml` |
 
 ## Behavior tree
 
-`behaviors/bioreactor_stir_dual_dosing.xml` — maintains impeller speed and runs
+`behaviors/bioreactor_stir_dual_dosing.xml` — holds an open-loop PWM command on the impeller (no encoder, so speed is not measured) and runs
 two independent periodic dosing schedules with configurable timing parameters.
 
 ## Quick start
