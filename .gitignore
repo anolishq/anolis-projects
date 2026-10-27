@@ -1,6 +1,10 @@
 # Anolis package archives — generated deploy artifacts, not committed
 *.anpkg
 
+# Runtime data (e-stop latch, run journal). With no runtime.data_dir the
+# runtime keeps it beside its config file (anolishq/anolis#562).
+anolis-data/
+
 # Python
 __pycache__/
 *.py[cod]
