@@ -32,9 +32,9 @@ runtime's API still needs its token (§4 shows how to send it).
 >   **AUTO → MANUAL → IDLE** — the AUTO→MANUAL transition is what zeros the motors.
 >   `AUTO → IDLE` directly is invalid.
 > - All `*_enable` params default **false** — nothing actuates until you enable it.
-> - For the actual staged run (single motor → both → dosing → AUTO), follow the
->   proven **actuation runbook** (`anolis/working/actuation-bench-runbook.md`);
->   this quickstart gets you *to* that point safely.
+> - For the actual run, escalate in stages (single motor → both → dosing → AUTO),
+>   one stage at a time, as §6 describes; this quickstart gets you *to* that
+>   point safely.
 
 ---
 
@@ -240,9 +240,13 @@ for p in json.load(sys.stdin)['providers']:
       the LAN instead.
 
 > **`rlht0`'s `t2_c` is left out of device health.** Only TC1 has a
-> thermocouple, and the empty TC2 reads quality `FAULT` (open circuit). The
-> runtime configs' `health.excluded_signals` drops `t2_c` from `rlht0`'s health,
-> so `rlht0` reads OK. `t2_c` is still read, served and recorded with its own
+> thermocouple. The empty TC2 reads one of two ways, depending on how it is
+> empty: quality `FAULT` when the MAX6675 sees an open probe, or `0.0` °C with
+> quality `OK` when its MISO line is stuck low (feastorg/Slice_RLHT#48). On
+> the reference rig it read `FAULT` on 2026-10-12, and `0.0` `OK` from
+> 2026-10-16. Neither is a temperature, so the runtime configs'
+> `health.excluded_signals` drops `t2_c` from `rlht0`'s health, and `rlht0`
+> reads OK. `t2_c` is still read, served and recorded with its own
 > quality. If you fit a second thermocouple, delete the `bread0/rlht0` entry so a
 > fault on TC2 shows again. A misspelt entry excludes nothing: the runtime logs a
 > WARN naming it after discovery, and `rlht0` reads FAULT as before
@@ -292,12 +296,12 @@ the embedded Grafana panel.
 > On 2026-10-12 (workbench 0.14.0) this held only until the project was imported:
 > after the import the header read `Running: bioreactor-v1`.
 
-## 6. Run the experiment (follow the actuation runbook)
+## 6. Run the experiment
 
-Do the actual run — staged escalation, load checks, AUTO dosing — via the proven
-**`anolis/working/actuation-bench-runbook.md`** (single motor low-PWM → both →
-dosing channels → AUTO), which encodes the abort criteria and the exact call
-shapes. In brief, the happy path:
+Escalate in stages, one at a time: a single motor at low PWM, then both
+motors, then the dosing channels, then AUTO. Check each stage's readings
+before the next, and at anything unexpected stop as §7 describes. The happy
+path:
 
 1. *(optional, for a provenance journal)* open a run: `POST /v0/runs {experiment_label,…}`.
 2. Set params one at a time (impeller/dosing) — `POST /v0/parameters {name,value}`.
