@@ -42,11 +42,11 @@ safety:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.1.53"
+    version: "0.1.55"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.9.1"
+      version: "0.9.2"
     ezo:
       repo: anolishq/anolis-provider-ezo
       version: "0.4.1"
