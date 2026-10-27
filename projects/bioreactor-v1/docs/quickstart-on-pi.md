@@ -12,7 +12,7 @@ runtime's API still needs its token (§4 shows how to send it).
 > - **Two different mechanisms zero the actuators. Do not confuse them** — this
 >   distinction hid a missing safe-state in this project for weeks:
 >   - **`safety.safe_state`** is what the **software e-stop** (`POST /v0/estop`,
->     and the E-STOP button in the workbench's Operate view) runs. It is declared
+>     and the SOFTWARE STOP button in the workbench's Operate view) runs. It is declared
 >     in **every** variant including `manual`, so the e-stop drives outputs to
 >     safe on any install.
 >   - **`automation.mode_transition_hooks`** fire on **mode transitions**
@@ -25,16 +25,18 @@ runtime's API still needs its token (§4 shows how to send it).
 >   stopped a running impeller.
 > - **The heater (`bread0/rlht0`) is turned off by the software safe state**
 >   and, in the `automation`/`full` variants only, by the `MANUAL→IDLE` hook.
->   A call reported OK is a frame sent, not one applied
->   (anolishq/anolis-provider-bread#134), so read `rlht0` back after entering
->   IDLE. The backplane cut remains its emergency stop.
+>   Whether a call reported OK was applied depends on the slice firmware:
+>   `rlht0`'s `set_confirmation` health metric reads `acknowledged` (applied),
+>   `delivery_only` (dispatched) or `unconfirmed` (a frame sent, not one
+>   applied) (anolishq/anolis-provider-bread#134), so read `rlht0` back after
+>   entering IDLE. The backplane cut remains its emergency stop.
 > - Mode ladder is strict: **IDLE → MANUAL → AUTO**. To stop, descend
 >   **AUTO → MANUAL → IDLE** — the AUTO→MANUAL transition is what zeros the motors.
 >   `AUTO → IDLE` directly is invalid.
 > - All `*_enable` params default **false** — nothing actuates until you enable it.
 > - For the actual staged run (single motor → both → dosing → AUTO), follow the
->   proven **actuation runbook** (`anolis/working/actuation-bench-runbook.md`);
->   this quickstart gets you *to* that point safely.
+>   steps in §6, with the parameters and defaults in
+>   [`runbook.md`](./runbook.md); this quickstart gets you *to* that point safely.
 
 ---
 
@@ -81,7 +83,7 @@ i2cdetect -y 1                                          # EXPECT: 13 14 15 61 63
 
 - [ ] `--check` reports nothing to do, and `i2cdetect` shows **13 14 15 61 63** —
       if any address is missing, fix wiring/power before continuing (a missing
-      address = a silently-excluded device later).
+      address = a device excluded later, reported missing in provider health).
 
 The DO circuit reports mg/L only out of the box, and this project also reads %
 saturation. Turn that output on once; the circuit stores it across power
@@ -112,11 +114,13 @@ a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS bloc
 bare `pip install`) from the pure-python PyPI wheel:
 
 ```bash
-bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + launches; browser opens at :3010
+bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + starts the server at :3010
 # later:  anolis-workbench                      # (then open http://127.0.0.1:3010)
 ```
 
-The launch opens a browser on the Pi's desktop and keeps the terminal. Over SSH,
+The launch serves http://127.0.0.1:3010 and keeps the terminal. On a Pi it
+does not open a browser by itself: open that address in the desktop browser, or
+launch with `ANOLIS_WORKBENCH_OPEN_BROWSER=1`. Over SSH,
 run the script with `--no-launch`, then start `anolis-workbench` from the
 desktop session.
 
@@ -194,7 +198,7 @@ sudo cp /opt/anolis/projects/bioreactor-v1/config/anolis-runtime.bioreactor.auto
 sudo systemctl restart anolis-runtime
 ```
 
-- [ ] `grep -c mode_transition_hooks /opt/anolis/config/runtime.yaml` → **≥1**
+- [ ] `grep -c '^  mode_transition_hooks:' /opt/anolis/config/runtime.yaml` → **1**
       (mode hooks present — motors zero on AUTO→MANUAL, MANUAL→IDLE and *→FAULT).
 - [ ] `grep -c '^safety:' /opt/anolis/config/runtime.yaml` → **1**
       (the e-stop safe state; should be present on every variant).
@@ -274,30 +278,31 @@ state), device health, parameter get/set (min/max honored), device-function
 calls, the automation/behavior-tree outline + fault view, an SSE event trace, and
 the embedded Grafana panel.
 
-> **Known friction — the env var is load-bearing, not optional.** Re-verified on
-> hardware 2026-08-03 with workbench 0.14.0. Without it the Operate proxy returns
-> `503 {"error": "Runtime is not running"}` even though the systemd runtime is up
-> and healthy on the same box. Two reasons, both in anolishq/anolis-workbench#277:
-> the workbench's external-runtime discovery iterates `~/.anolis/systems`, which
-> an `install.sh --project` machine never populates; and even after importing, it
-> skips any runtime whose configured bind is not loopback — and `install.sh
-> --project` always emits `bind: 0.0.0.0`.
+> **Known friction — before the import, only the URL variable reaches the
+> runtime.** Without it the Operate proxy returns
+> `503 {"error": "Runtime is not running"}` until the project is imported, even
+> though the systemd runtime is up and healthy on the same box: the workbench's
+> external-runtime discovery iterates `~/.anolis/systems`, which an
+> `install.sh --project` machine never populates. After the import it probes the
+> imported project's runtime config (`bind: 127.0.0.1`, port 8080), counts a
+> `401` as a runtime that is there, and finds the systemd runtime
+> (anolishq/anolis-workbench#277). The token still has to reach the workbench,
+> through `ANOLIS_WORKBENCH_RUNTIME_TOKEN` or the copy its `--workbench-service`
+> install writes, or Operate's calls get `401`.
 >
-> **The env var only fixes half of it.** It patches the proxy, so live data flows
-> and the device tables work — but `launcher.get_status()` never consults it, so
-> `/api/status` still reports `running: false, active_project: null`. Anything
-> keyed on that (the not-running banner, active-project display, and the #264
-> logic that hides the E-stop when a *different* project is running) stays wrong.
-> Treat Operate's data as trustworthy and its chrome as not, until #277 lands.
-> On 2026-10-12 (workbench 0.14.0) this held only until the project was imported:
-> after the import the header read `Running: bioreactor-v1`.
+> **The env var only patches the proxy.** `launcher.get_status()` never consults
+> it, so before the import `/api/status` reports
+> `running: false, active_project: null`, and the not-running banner and
+> active-project display read wrong. After the import the header reads
+> `Running: bioreactor-v1`. Another project's Operate view keeps the running
+> project's software stop reachable (#264).
 
 ## 6. Run the experiment (follow the actuation runbook)
 
-Do the actual run — staged escalation, load checks, AUTO dosing — via the proven
-**`anolis/working/actuation-bench-runbook.md`** (single motor low-PWM → both →
-dosing channels → AUTO), which encodes the abort criteria and the exact call
-shapes. In brief, the happy path:
+Do the actual run — staged escalation, load checks, AUTO dosing — one stage at
+a time (single motor low-PWM → both → dosing channels → AUTO), with the
+parameters and defaults in [`runbook.md`](./runbook.md). In brief, the happy
+path:
 
 1. *(optional, for a provenance journal)* open a run: `POST /v0/runs {experiment_label,…}`.
 2. Set params one at a time (impeller/dosing) — `POST /v0/parameters {name,value}`.
@@ -335,15 +340,17 @@ them about:
 |---|---|---|
 | §0 | host prep comes before `install.sh`, and may need a reboot; `install.sh` no longer touches `config.txt` | anolishq/anolis#318 |
 | §0 | the DO circuit's % saturation output is off out of the box; turn it on before installing | — |
-| §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#249 |
+| §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#178 |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
 | §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
 | §5 | Operate is disabled until the project is imported | — |
-| §5 | `ANOLIS_WORKBENCH_RUNTIME_URL` is required for Operate's data | anolishq/anolis-workbench#277 |
+| §5 | Operate finds the systemd runtime only after the import, and needs the runtime token | anolishq/anolis-workbench#277 |
 
 Walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).
-This revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0) was walked
-through §5 on a fresh card on **2026-10-12**, with workbench 0.14.0 and nothing
-actuated; §6 and §7 were not run.
+An earlier revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0, the RLHT
+at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbench
+0.14.0 and nothing actuated; §6 and §7 were not run. This revision (anolis
+0.1.55, bread 0.9.2, ezo 0.4.1, the RLHT at 0x13, token-authenticated calls) has
+not been walked on hardware.
