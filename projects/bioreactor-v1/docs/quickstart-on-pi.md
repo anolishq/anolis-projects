@@ -370,8 +370,10 @@ at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbenc
 had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
-Grafana dashboards. This revision pins anolis 0.2.0 and bread 0.10.0 and has
-not been walked on hardware. Both change what an existing install does, so
-read their upgrade notes before upgrading: browser origins not listed in
-`http.cors_allowed_origins` are refused, an install whose safe state cannot be
-planned fails, and bread drives its outputs safe each time it starts.
+Grafana dashboards. This revision pins anolis 0.3.0 and bread 0.10.0 and has
+not been walked on hardware. anolis 0.2.0 and 0.3.0 and bread 0.10.0 each
+change what an existing install does, so read their upgrade notes before
+upgrading: browser origins not listed in `http.cors_allowed_origins` are
+refused, an install whose safe state cannot be planned fails, bread drives its
+outputs safe each time it starts, and `install.sh` resolves a relative
+`runtime.data_dir` against the config's directory, which §3 relies on.

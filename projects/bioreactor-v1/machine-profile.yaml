@@ -41,7 +41,7 @@ safety:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.2.0"
+    version: "0.3.0"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
