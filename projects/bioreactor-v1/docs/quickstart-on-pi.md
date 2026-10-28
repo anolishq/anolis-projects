@@ -183,10 +183,9 @@ echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 > reboot. `--allow-unmet-host` installs anyway; those providers then start with no
 > devices until the host is fixed and the service restarted.
 
-> **Read the exit code, not the banner.** `install.sh` prints a large
-> "Anolis installation complete" box *before* reporting failure, so a failed
-> install still shows a success-looking banner with `✗ Runtime did not come up`
-> underneath it. Trust `exit=` and the `✓/✗` lines.
+> **Read the exit code as well as the banner.** A failed install's banner reads
+> "Anolis installed, but NOT ready", and its last line says why the install did
+> NOT succeed. Trust `exit=` and the `✓/✗` lines.
 >
 > `--variant manual` makes the machine **boot inert** — no autonomous actuation
 > until you deliberately activate automation in §3.
@@ -210,6 +209,10 @@ sudo systemctl restart anolis-runtime
 - [ ] `grep -c '^safety:' /opt/anolis/config/runtime.yaml` → **1**
       (the e-stop safe state; should be present on every variant).
 - [ ] `grep -A1 'telemetry:' /opt/anolis/config/runtime.yaml | grep enabled` → **true**.
+- [ ] `journalctl -u anolis-runtime -o cat | grep -F '[Config] Data dir:' | tail -1`
+      ends **`/opt/anolis/anolis-data`**: the e-stop latch and the run journal are
+      where `install.sh` put them. The variant names `data_dir: ../anolis-data`
+      for this (anolishq/anolis#643).
 
 ## 4. Verify bring-up
 
@@ -352,7 +355,6 @@ them about:
 |---|---|---|
 | §0 | host prep comes before `install.sh`, and may need a reboot; `install.sh` no longer touches `config.txt` | anolishq/anolis#318 |
 | §0 | the DO circuit's % saturation output is off out of the box; turn it on before installing | — |
-| §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#178 |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
 | §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
