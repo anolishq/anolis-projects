@@ -1,5 +1,9 @@
 runtime:
   name: bioreactor-automation
+  # Beside the config's directory: <prefix>/anolis-data once installed, and
+  # the same after the quickstart copies this file over runtime.yaml
+  # (anolishq/anolis#643). A run from a checkout uses <project>/anolis-data.
+  data_dir: ../anolis-data
   shutdown_timeout_ms: 3000
   startup_timeout_ms: 30000
 

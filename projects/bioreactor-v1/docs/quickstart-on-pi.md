@@ -183,10 +183,9 @@ echo "exit=${PIPESTATUS[0]}"     # NOT $?  (that reads tee)
 > reboot. `--allow-unmet-host` installs anyway; those providers then start with no
 > devices until the host is fixed and the service restarted.
 
-> **Read the exit code, not the banner.** `install.sh` prints a large
-> "Anolis installation complete" box *before* reporting failure, so a failed
-> install still shows a success-looking banner with `✗ Runtime did not come up`
-> underneath it. Trust `exit=` and the `✓/✗` lines.
+> **Read the exit code as well as the banner.** A failed install's banner reads
+> "Anolis installed, but NOT ready", and its last line says why the install did
+> NOT succeed. Trust `exit=` and the `✓/✗` lines.
 >
 > `--variant manual` makes the machine **boot inert** — no autonomous actuation
 > until you deliberately activate automation in §3.
@@ -210,6 +209,10 @@ sudo systemctl restart anolis-runtime
 - [ ] `grep -c '^safety:' /opt/anolis/config/runtime.yaml` → **1**
       (the e-stop safe state; should be present on every variant).
 - [ ] `grep -A1 'telemetry:' /opt/anolis/config/runtime.yaml | grep enabled` → **true**.
+- [ ] `journalctl -u anolis-runtime -o cat | grep -F '[Config] Data dir:' | tail -1`
+      ends **`/opt/anolis/anolis-data`**: the e-stop latch and the run journal are
+      where `install.sh` put them. The variant names `data_dir: ../anolis-data`
+      for this (anolishq/anolis#643).
 
 ## 4. Verify bring-up
 
@@ -352,7 +355,6 @@ them about:
 |---|---|---|
 | §0 | host prep comes before `install.sh`, and may need a reboot; `install.sh` no longer touches `config.txt` | anolishq/anolis#318 |
 | §0 | the DO circuit's % saturation output is off out of the box; turn it on before installing | — |
-| §2 | "installation complete" banner prints even when the install failed — read the exit code | anolishq/anolis#178 |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
 | §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
@@ -368,8 +370,10 @@ at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbenc
 had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
-Grafana dashboards. This revision pins anolis 0.2.0 and bread 0.10.0 and has
-not been walked on hardware. Both change what an existing install does, so
-read their upgrade notes before upgrading: browser origins not listed in
-`http.cors_allowed_origins` are refused, an install whose safe state cannot be
-planned fails, and bread drives its outputs safe each time it starts.
+Grafana dashboards. This revision pins anolis 0.3.0 and bread 0.10.0 and has
+not been walked on hardware. anolis 0.2.0 and 0.3.0 and bread 0.10.0 each
+change what an existing install does, so read their upgrade notes before
+upgrading: browser origins not listed in `http.cors_allowed_origins` are
+refused, an install whose safe state cannot be planned fails, bread drives its
+outputs safe each time it starts, and `install.sh` resolves a relative
+`runtime.data_dir` against the config's directory, which §3 relies on.
