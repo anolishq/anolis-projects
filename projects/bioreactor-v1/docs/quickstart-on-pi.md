@@ -363,9 +363,13 @@ Walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).
 An earlier revision (host prep, anolis 0.1.43, bread 0.5.0, ezo 0.4.0, the RLHT
 at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbench
-0.14.0 and nothing actuated; §6 and §7 were not run. The revision before this
-one (anolis 0.1.56, bread 0.9.3, ezo 0.4.1, the RLHT at 0x13, token-authenticated
-calls) had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an
-upgrade from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards
-with live data were not. This revision pins anolis 0.1.57, which changes only
-the bundled Grafana dashboards, and has not been walked on hardware.
+0.14.0 and nothing actuated; §6 and §7 were not run. A revision pinning anolis
+0.1.56, bread 0.9.3 and ezo 0.4.1 (the RLHT at 0x13, token-authenticated calls)
+had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
+from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
+live data were not. The next, pinning anolis 0.1.57, changed only the bundled
+Grafana dashboards. This revision pins anolis 0.2.0 and bread 0.10.0 and has
+not been walked on hardware. Both change what an existing install does, so
+read their upgrade notes before upgrading: browser origins not listed in
+`http.cors_allowed_origins` are refused, an install whose safe state cannot be
+planned fails, and bread drives its outputs safe each time it starts.
