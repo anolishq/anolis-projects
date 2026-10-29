@@ -66,6 +66,10 @@ automation:
   behavior_tree: projects/bioreactor-v1/behaviors/bioreactor_stir_dual_dosing.xml
   tick_rate_hz: 2
   manual_gating_policy: BLOCK
+  # The tree is a control loop whose root returns SUCCESS every tick, and it
+  # relies on being ticked again (anolis 0.6.0+, anolishq/anolis#596). stop
+  # would leave the outputs where its first tick set them.
+  on_terminal: repeat
   parameters:
     - name: impeller_enable
       type: bool
