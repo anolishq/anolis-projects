@@ -370,10 +370,10 @@ at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbenc
 had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
-Grafana dashboards. This revision pins anolis 0.5.0 and bread 0.10.0 and has
-not been walked on hardware. anolis 0.2.0, 0.3.0, 0.4.0 and 0.5.0 and bread
-0.10.0 each change what an existing install does, so read their upgrade notes
-before upgrading: browser origins not listed in `http.cors_allowed_origins` are
+Grafana dashboards. This revision pins anolis 0.6.0 and bread 0.10.0 and has
+not been walked on hardware. anolis 0.2.0 through 0.6.0 and bread 0.10.0 each
+change what an existing install does, so read their upgrade notes before
+upgrading: browser origins not listed in `http.cors_allowed_origins` are
 refused, an install whose safe state cannot be planned fails, bread drives its
 outputs safe each time it starts, `install.sh` resolves a relative
 `runtime.data_dir` against the config's directory, which §3 relies on,
@@ -381,4 +381,7 @@ outputs safe each time it starts, `install.sh` resolves a relative
 keeps the workbench's `anolis-workbench.service`, a software stop on the
 automation variant logs one INFO line for the FAULT hooks the latch holds where
 it logged four ERRORs, Grafana stops updating its own plugins once install.sh
-runs again with `--with-observability`, and Signal History refreshes every 30 s.
+runs again with `--with-observability`, Signal History refreshes every 30 s,
+and the automation tree's result is logged once rather than on every tick. The
+`automation` and `full` variants set `automation.on_terminal: repeat`, so the
+tree is still ticked again after each pass, as before.
