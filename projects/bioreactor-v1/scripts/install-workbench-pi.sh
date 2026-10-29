@@ -9,11 +9,19 @@
 # "externally managed" — PEP 668 — so a bare `pip install` is refused), from the
 # pure-python wheel published on PyPI (`anolis_workbench-<ver>-py3-none-any`).
 #
+# It installs the workbench version this project revision pins below (#104).
+# To install another, set ANOLIS_WORKBENCH_VERSION; the guide was not walked
+# with it.
+#
 # Usage (on the Pi):
 #   bash install-workbench-pi.sh            # install + launch
 #   bash install-workbench-pi.sh --no-launch
+#   ANOLIS_WORKBENCH_VERSION=0.25.0 bash install-workbench-pi.sh
 #
 set -euo pipefail
+
+# renovate: datasource=pypi depName=anolis-workbench
+WORKBENCH_VERSION="0.26.0"
 
 VENV="${HOME}/.local/share/anolis-workbench/venv"
 BIN_DIR="${HOME}/.local/bin"
@@ -39,8 +47,12 @@ log "python3 $(python3 -V 2>&1 | awk '{print $2}')"
 # 2. Isolated venv + the workbench from PyPI (pure-python wheel → works on ARM).
 python3 -m venv "${VENV}"
 "${VENV}/bin/pip" install --quiet --upgrade pip
-warn "installing anolis-workbench from PyPI…"
-"${VENV}/bin/pip" install --quiet --upgrade anolis-workbench
+VERSION="${ANOLIS_WORKBENCH_VERSION:-${WORKBENCH_VERSION}}"
+if [[ "${VERSION}" != "${WORKBENCH_VERSION}" ]]; then
+  warn "ANOLIS_WORKBENCH_VERSION=${VERSION}: installing it in place of the pinned ${WORKBENCH_VERSION}"
+fi
+warn "installing anolis-workbench ${VERSION} from PyPI…"
+"${VENV}/bin/pip" install --quiet "anolis-workbench==${VERSION}"
 # --version prints "anolis-workbench <version>".
 VER="$("${VENV}/bin/anolis-workbench" --version 2>/dev/null || echo 'anolis-workbench ?')"
 log "${VER} installed at ${VENV}"

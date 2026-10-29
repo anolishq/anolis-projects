@@ -25,6 +25,16 @@
       ],
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump the workbench version the Pi bootstrap installs (#104)",
+      "managerFilePatterns": [
+        "/projects/.+/scripts/install-workbench-pi\\.sh$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s*\\n\\s*WORKBENCH_VERSION=\"(?<currentValue>[^\"]+)\""
+      ]
     }
   ],
   "packageRules": [

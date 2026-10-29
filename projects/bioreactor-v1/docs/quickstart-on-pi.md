@@ -111,7 +111,9 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 
 There is no Pi desktop installer; the workbench runs as a local server you open in
 a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
-bare `pip install`) from the pure-python PyPI wheel:
+bare `pip install`) from the pure-python PyPI wheel, at the version the script
+pins (`WORKBENCH_VERSION`, 0.26.0 in this revision; Renovate bumps it). Set
+`ANOLIS_WORKBENCH_VERSION` to install another:
 
 ```bash
 bash "$PROJ/scripts/install-workbench-pi.sh"   # installs + starts the server at :3010
@@ -370,10 +372,11 @@ at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbenc
 had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
-Grafana dashboards. This revision pins anolis 0.6.0 and bread 0.10.0 and has
-not been walked on hardware. anolis 0.2.0 through 0.6.0 and bread 0.10.0 each
-change what an existing install does, so read their upgrade notes before
-upgrading: browser origins not listed in `http.cors_allowed_origins` are
+Grafana dashboards. This revision pins anolis 0.6.0, bread 0.10.0 and
+workbench 0.26.0 and has not been walked on hardware. anolis 0.2.0 through
+0.6.0 and bread 0.10.0 each change what an existing install does, so read
+their upgrade notes before upgrading: browser origins not listed in
+`http.cors_allowed_origins` are
 refused, an install whose safe state cannot be planned fails, bread drives its
 outputs safe each time it starts, `install.sh` resolves a relative
 `runtime.data_dir` against the config's directory, which §3 relies on,
