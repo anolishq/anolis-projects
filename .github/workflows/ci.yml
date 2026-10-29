@@ -99,6 +99,15 @@ jobs:
             --schemafile /tmp/anolis-schema/schemas/machine/machine-profile.schema.json \
             projects/*/machine-profile.yaml
 
+      - name: Test shell scripts
+        run: |
+          status=0
+          for t in $(git ls-files 'projects/*.test.sh'); do
+            echo "== ${t}"
+            bash "${t}" || status=1
+          done
+          exit "${status}"
+
       - name: Shellcheck shell scripts
         run: |
           files=$(git ls-files '*.sh')
