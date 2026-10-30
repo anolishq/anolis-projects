@@ -21,7 +21,7 @@
 set -euo pipefail
 
 # renovate: datasource=pypi depName=anolis-workbench
-WORKBENCH_VERSION="0.26.0"
+WORKBENCH_VERSION="0.27.0"
 
 VENV="${HOME}/.local/share/anolis-workbench/venv"
 BIN_DIR="${HOME}/.local/bin"

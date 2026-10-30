@@ -112,7 +112,7 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 There is no Pi desktop installer; the workbench runs as a local server you open in
 a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
 bare `pip install`) from the pure-python PyPI wheel, at the version the script
-pins (`WORKBENCH_VERSION`, 0.26.0 in this revision; Renovate bumps it). Set
+pins (`WORKBENCH_VERSION`, 0.27.0 in this revision; Renovate bumps it). Set
 `ANOLIS_WORKBENCH_VERSION` to install another:
 
 ```bash
@@ -288,10 +288,11 @@ anolis-provision workbench-service
 It prints the ssh tunnel command for reaching the service from another
 machine. On the Pi, open `http://127.0.0.1:3010`.
 
-The Compose, Commission and Operate tabs stay disabled until a project is open.
-On the home page, under **Import Machine Profile**, enter the project directory
-(the value of `$PROJ`, e.g. `/home/<you>/anolis/anolis-projects/projects/bioreactor-v1`)
-and import it. The workbench opens the project; then choose **Operate**.
+There is nothing to import. Each time it starts, the workbench imports the
+project `install.sh` installed (`/opt/anolis/projects/bioreactor-v1`), read-only,
+so **bioreactor-v1** is on the home page. Open it, then choose **Operate**. If a
+project of your own is already called bioreactor-v1, it is kept, and the
+installed one is `bioreactor-v1-installed`.
 
 - [ ] Operate's Runtime Status reads the runtime's version and mode, and the
       header reads `Running: bioreactor-v1`.
@@ -301,18 +302,7 @@ state), device health, parameter get/set (min/max honored), device-function
 calls, the automation/behavior-tree outline + fault view, an SSE event trace, and
 the embedded Grafana panel.
 
-> **Before the import, Operate cannot see the runtime.** The workbench finds an
-> installed runtime by probing the runtime configs of the projects it has
-> (anolishq/anolis-workbench#277), and an `install.sh --project` machine starts
-> with none. Until the import, the Operate proxy answers
-> `503 {"error": "Runtime is not running"}` and `/api/status` reports
-> `running: false`, though the systemd runtime is up. After the import, it probes
-> the imported project's runtime config (`bind: 127.0.0.1`, port 8080) and finds
-> it.
->
-> **Without the token copy, Operate's calls get `401`.** The runtime requires its
-> token on loopback too, and Operate shows "Failed to set mode: unauthorized".
-> After rotating the runtime's token, run `anolis-provision workbench-service`
+> **After rotating the runtime's token,** run `anolis-provision workbench-service`
 > again to refresh the copy.
 >
 > **To point the workbench at a runtime URL instead,** for a runtime on another
@@ -377,8 +367,6 @@ them about:
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
 | §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
-| §5 | Operate is disabled until the project is imported | — |
-| §5 | Operate finds the systemd runtime only after the import, and needs the runtime token | anolishq/anolis-workbench#277 |
 
 Walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).
@@ -390,11 +378,11 @@ had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
 Grafana dashboards. This revision pins anolis 0.6.0, bread 0.10.0 and
-workbench 0.26.0 and has not been walked on hardware. Its §5 service route was
-checked on **2026-10-30** on a Pi with anolis 0.6.0, workbench 0.26.0 and the
-project already imported: after `anolis-provision workbench-service`, with no
-environment variables, Operate's proxied runtime status answered 200 and
-`/api/status` reported the runtime running. anolis 0.2.0 through
+workbench 0.27.0 and has not been walked on hardware. Its §5 was checked on
+**2026-10-30** on a Pi with anolis 0.6.0 and workbench 0.27.0, with no
+environment variables and no import by hand: at startup the workbench imported
+bioreactor-v1 from `/opt/anolis`, and Operate's proxied runtime status answered
+200. anolis 0.2.0 through
 0.6.0 and bread 0.10.0 each change what an existing install does, so read
 their upgrade notes before upgrading: browser origins not listed in
 `http.cors_allowed_origins` are
