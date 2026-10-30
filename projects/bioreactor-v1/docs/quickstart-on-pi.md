@@ -270,48 +270,65 @@ for p in json.load(sys.stdin)['providers']:
 
 ## 5. Operate from the workbench
 
-The workbench runs on the Pi; point its Operate view at the **provisioned**
-runtime on loopback, with the runtime's token. With `ANOLIS_WORKBENCH_RUNTIME_URL`
-set, the workbench sends only a token given in `ANOLIS_WORKBENCH_RUNTIME_TOKEN`.
-Without it, Operate's runtime calls get `401`. Launch it with:
+Run the workbench as a service that holds the runtime's token.
+`anolis-provision workbench-service` installs a systemd service for the
+workbench, which starts at boot, runs as you and binds 127.0.0.1:3010. It copies
+the runtime's API token alone into `/etc/anolis/workbench-runtime-token`, a
+`0600` file owned by you, and asks for your sudo password to do it. The runtime
+install is left as it is. The service needs no environment variables: the
+workbench sends that token only to a runtime on this machine.
+
+The service listens on the same port as the workbench §1 started, so stop that
+one first (Ctrl+C in its terminal). Then:
 
 ```bash
-ANOLIS_WORKBENCH_RUNTIME_URL=http://127.0.0.1:8080 \
-ANOLIS_WORKBENCH_RUNTIME_TOKEN="$(sudo sed -n 's/^ANOLIS_API_TOKEN=//p' /etc/anolis/runtime.env)" \
-  anolis-workbench
+anolis-provision workbench-service
 ```
 
-The token is read into the workbench's environment, never into a command line
-or your shell history.
+It prints the ssh tunnel command for reaching the service from another
+machine. On the Pi, open `http://127.0.0.1:3010`.
 
 The Compose, Commission and Operate tabs stay disabled until a project is open.
 On the home page, under **Import Machine Profile**, enter the project directory
 (the value of `$PROJ`, e.g. `/home/<you>/anolis/anolis-projects/projects/bioreactor-v1`)
 and import it. The workbench opens the project; then choose **Operate**.
 
+- [ ] Operate's Runtime Status reads the runtime's version and mode, and the
+      header reads `Running: bioreactor-v1`.
+
 In **Operate** you get: the mode ladder, live signal tables (pH, DO, temp, motor
 state), device health, parameter get/set (min/max honored), device-function
 calls, the automation/behavior-tree outline + fault view, an SSE event trace, and
 the embedded Grafana panel.
 
-> **Known friction — before the import, only the URL variable reaches the
-> runtime.** Without it the Operate proxy returns
-> `503 {"error": "Runtime is not running"}` until the project is imported, even
-> though the systemd runtime is up and healthy on the same box: the workbench's
-> external-runtime discovery iterates `~/.anolis/systems`, which an
-> `install.sh --project` machine never populates. After the import it probes the
-> imported project's runtime config (`bind: 127.0.0.1`, port 8080), counts a
-> `401` as a runtime that is there, and finds the systemd runtime
-> (anolishq/anolis-workbench#277). The token still has to reach the workbench,
-> through `ANOLIS_WORKBENCH_RUNTIME_TOKEN` or the copy its `--workbench-service`
-> install writes, or Operate's calls get `401`.
+> **Before the import, Operate cannot see the runtime.** The workbench finds an
+> installed runtime by probing the runtime configs of the projects it has
+> (anolishq/anolis-workbench#277), and an `install.sh --project` machine starts
+> with none. Until the import, the Operate proxy answers
+> `503 {"error": "Runtime is not running"}` and `/api/status` reports
+> `running: false`, though the systemd runtime is up. After the import, it probes
+> the imported project's runtime config (`bind: 127.0.0.1`, port 8080) and finds
+> it.
 >
-> **The env var only patches the proxy.** `launcher.get_status()` never consults
-> it, so before the import `/api/status` reports
-> `running: false, active_project: null`, and the not-running banner and
-> active-project display read wrong. After the import the header reads
-> `Running: bioreactor-v1`. Another project's Operate view keeps the running
-> project's software stop reachable (#264).
+> **Without the token copy, Operate's calls get `401`.** The runtime requires its
+> token on loopback too, and Operate shows "Failed to set mode: unauthorized".
+> After rotating the runtime's token, run `anolis-provision workbench-service`
+> again to refresh the copy.
+>
+> **To point the workbench at a runtime URL instead,** for a runtime on another
+> machine or a development run, launch it with two environment variables. With
+> `ANOLIS_WORKBENCH_RUNTIME_URL` set, the workbench sends only the token given in
+> `ANOLIS_WORKBENCH_RUNTIME_TOKEN`, never the service's copy. For this Pi's
+> runtime, from a terminal workbench rather than the service:
+>
+> ```bash
+> ANOLIS_WORKBENCH_RUNTIME_URL=http://127.0.0.1:8080 \
+> ANOLIS_WORKBENCH_RUNTIME_TOKEN="$(sudo sed -n 's/^ANOLIS_API_TOKEN=//p' /etc/anolis/runtime.env)" \
+>   anolis-workbench
+> ```
+>
+> The token is read into the workbench's environment, never into a command line
+> or your shell history.
 
 ## 6. Run the experiment
 
@@ -373,7 +390,11 @@ had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
 Grafana dashboards. This revision pins anolis 0.6.0, bread 0.10.0 and
-workbench 0.26.0 and has not been walked on hardware. anolis 0.2.0 through
+workbench 0.26.0 and has not been walked on hardware. Its §5 service route was
+checked on **2026-10-30** on a Pi with anolis 0.6.0, workbench 0.26.0 and the
+project already imported: after `anolis-provision workbench-service`, with no
+environment variables, Operate's proxied runtime status answered 200 and
+`/api/status` reported the runtime running. anolis 0.2.0 through
 0.6.0 and bread 0.10.0 each change what an existing install does, so read
 their upgrade notes before upgrading: browser origins not listed in
 `http.cors_allowed_origins` are
