@@ -36,7 +36,8 @@ compatibility:
 safety:
   estop_topology: power_cut
 
-# The workbench's operator panel (anolis 0.7.0+; start.require 0.8.0+).
+# The workbench's operator panel (anolis 0.7.0+; start.require 0.8.0+;
+# run, its label and require.when 0.9.0+).
 # Presentation only: the runtime does not read it. Parameters are the
 # automation and full variants' automation.parameters.
 operator:
@@ -73,7 +74,8 @@ operator:
         - { parameter: sample_startup_delay_s, label: First sample after, unit: s }
         - { parameter: sample_interval_s, label: Every, unit: s }
         - { parameter: sample_pulse_s, label: For, unit: s }
-  experiment:
+  run:
+    label: Run
     start:
       enable: [impeller_enable, dose1_enable, dose2_enable, sample_enable]
       mode: AUTO
@@ -82,7 +84,7 @@ operator:
       require:
         - { signal: bread0/dcmt1/motor1_brake, equals: false, message: "Release dose pump 1's brake" }
         - { signal: bread0/dcmt1/motor2_brake, equals: false, message: "Release dose pump 2's brake" }
-        - { signal: bread0/dcmt0/motor1_brake, equals: false, message: "Release the sample pump's brake" }
+        - { signal: bread0/dcmt0/motor1_brake, equals: false, message: "Release the sample pump's brake", when: sample_enable }
     stop:
       disable: [impeller_enable, dose1_enable, dose2_enable, sample_enable]
       mode: IDLE
@@ -92,7 +94,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.8.0"
+    version: "0.9.0"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
