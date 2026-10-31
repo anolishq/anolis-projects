@@ -121,17 +121,23 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `dose2_interval_s`          | int64 | 900     | Interval between dose 2 pulses        |
 | `dose2_pulse_s`             | int64 | 5       | Duration of dose 2 pulse; must be less than `dose2_interval_s` |
 | `dose2_max_pulses_per_hour` | int64 | 0       | Rate cap for dose 2 (0 = unlimited)   |
+| `sample_enable`             | bool  | false   | Enable the sample pump's schedule     |
+| `sample_pwm`                | int64 | 240     | Sample pump PWM (0–255)               |
+| `sample_startup_delay_s`    | int64 | 60      | Delay before the first sample pulse   |
+| `sample_interval_s`         | int64 | 900     | Interval between sample pulses        |
+| `sample_pulse_s`            | int64 | 5       | Duration of a sample pulse; must be less than `sample_interval_s` |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
 
-> **A dose pulse must be shorter than its interval.** Each parameter is checked
-> against its own range only, so `dose1_interval_s: 3` is accepted while
+> **A dose or sample pulse must be shorter than its interval.** Each parameter
+> is checked against its own range only, so `dose1_interval_s: 3` is accepted while
 > `dose1_pulse_s` is 5. The tree then turns that dose channel off, whether or
 > not it is enabled, and keeps writing the impeller and the other channel. The
 > runtime stays in AUTO, and logs `[PeriodicPulseWindowNode] Invalid scheduling
 > inputs` at ERROR every tick until the schedule is valid again
 > (anolishq/anolis-projects#103). `validation/check_invalid_dose_schedule.py`
-> checks this against a mock bread provider.
+> checks this against a mock bread provider, and `validation/check_sampler.py`
+> checks the sampler the same way (anolishq/anolis-projects#127).
 
 > **Parameters are not persisted.** Every value above reverts to the default in
 > this table whenever the runtime restarts — including across an upgrade. A
@@ -144,8 +150,8 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 >
 > The *current* value of every parameter, and whether it is a default or an
 > operator value, is in `GET /v0/parameters`. While in AUTO, the behaviour tree
-> also logs the three numeric parameters it reads with `GetParameter`
-> (`impeller_pwm`, `dose1_pwm`, `dose2_pwm`) on every tick; parameters read
+> also logs the four numeric parameters it reads with `GetParameter`
+> (`impeller_pwm`, `dose1_pwm`, `dose2_pwm`, `sample_pwm`) on every tick; parameters read
 > with `GetParameterBool` or `GetParameterInt64` are not logged:
 >
 > ```
@@ -160,7 +166,7 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 
 | Device       | Channel | Assignment                                     |
 | ------------ | ------- | ---------------------------------------------- |
-| dcmt0 (0x14) | motor1  | Sample pump — **held at 0 in automation mode** |
+| dcmt0 (0x14) | motor1  | Sample pump: `sample_*` schedule in automation |
 | dcmt0 (0x14) | motor2  | Impeller (stirring)                            |
 | dcmt1 (0x15) | motor1  | Dosing pump 1                                  |
 | dcmt1 (0x15) | motor2  | Dosing pump 2                                  |

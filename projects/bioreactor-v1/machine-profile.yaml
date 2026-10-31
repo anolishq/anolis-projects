@@ -36,7 +36,8 @@ compatibility:
 safety:
   estop_topology: power_cut
 
-# The workbench's operator panel (anolis 0.7.0+; start.require 0.8.0+).
+# The workbench's operator panel (anolis 0.7.0+; start.require 0.8.0+;
+# run, its label and require.when 0.9.0+).
 # Presentation only: the runtime does not read it. Parameters are the
 # automation and full variants' automation.parameters.
 operator:
@@ -66,17 +67,26 @@ operator:
         - { parameter: dose2_interval_s, label: Every, unit: s }
         - { parameter: dose2_pulse_s, label: For, unit: s }
         - { parameter: dose2_max_pulses_per_hour, label: Max doses per hour (0 = no limit) }
-  experiment:
+    - group: Sampler
+      items:
+        - { parameter: sample_enable, label: "On" }
+        - { parameter: sample_pwm, label: Pump speed, unit: "/ 255" }
+        - { parameter: sample_startup_delay_s, label: First sample after, unit: s }
+        - { parameter: sample_interval_s, label: Every, unit: s }
+        - { parameter: sample_pulse_s, label: For, unit: s }
+  run:
+    label: Run
     start:
-      enable: [impeller_enable, dose1_enable, dose2_enable]
+      enable: [impeller_enable, dose1_enable, dose2_enable, sample_enable]
       mode: AUTO
-      # dcmt1 drives the dose pumps: ch1 dose 1, ch2 dose 2. A pump whose
-      # brake is engaged refuses every pulse.
+      # dcmt1 drives the dose pumps (ch1 dose 1, ch2 dose 2) and dcmt0 ch1
+      # the sample pump. A pump whose brake is engaged refuses every pulse.
       require:
-        - { signal: bread0/dcmt1/motor1_brake, equals: false, message: "Release dose pump 1's brake" }
-        - { signal: bread0/dcmt1/motor2_brake, equals: false, message: "Release dose pump 2's brake" }
+        - { signal: bread0/dcmt1/motor1_brake, equals: false, message: "Release dose pump 1's brake", when: dose1_enable }
+        - { signal: bread0/dcmt1/motor2_brake, equals: false, message: "Release dose pump 2's brake", when: dose2_enable }
+        - { signal: bread0/dcmt0/motor1_brake, equals: false, message: "Release the sample pump's brake", when: sample_enable }
     stop:
-      disable: [impeller_enable, dose1_enable, dose2_enable]
+      disable: [impeller_enable, dose1_enable, dose2_enable, sample_enable]
       mode: IDLE
 
 # Pinned artifact versions for bundle CI.
@@ -84,7 +94,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.8.0"
+    version: "0.9.0"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread

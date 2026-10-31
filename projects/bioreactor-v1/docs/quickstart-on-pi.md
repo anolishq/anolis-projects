@@ -328,7 +328,7 @@ parameters and defaults in [`runbook.md`](./runbook.md). Check each stage's
 readings before the next, and at anything unexpected stop as §7 describes. In
 brief, the happy path:
 
-1. *(optional, for a provenance journal)* open a run: `POST /v0/runs {experiment_label,…}`.
+1. *(optional, for a provenance journal)* open a run: `POST /v0/runs {label,…}`.
 2. Set params one at a time (impeller/dosing) — `POST /v0/parameters {name,value}`.
 3. `IDLE → MANUAL` (`POST /v0/mode {"mode":"MANUAL"}`), verify manual control.
 4. `MANUAL → AUTO` — the behavior tree begins ticking; manual calls are BLOCKED in AUTO.
