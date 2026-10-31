@@ -3,7 +3,7 @@
   <!--
     Bioreactor stir + dual dosing automation:
     - Maintain impeller command (dcmt0 motor2)
-    - Keep sample pump off by default in automation (dcmt0 motor1=0)
+    - Run a periodic sampler on dcmt0 motor1, scheduled as the doses are
     - Run two independent dosing schedules on dcmt1 (motor1=dose1, motor2=dose2)
     - Emit set_open_loop only on command change or keepalive
 
@@ -29,6 +29,12 @@
       <GetParameterInt64 param="dose2_pulse_s" value="{dose2_pulse_s}"/>
       <GetParameterInt64 param="dose2_max_pulses_per_hour" value="{dose2_max_pulses_per_hour}"/>
 
+      <GetParameterBool param="sample_enable" value="{sample_enable}"/>
+      <GetParameter param="sample_pwm" value="{sample_pwm}"/>
+      <GetParameterInt64 param="sample_startup_delay_s" value="{sample_startup_delay_s}"/>
+      <GetParameterInt64 param="sample_interval_s" value="{sample_interval_s}"/>
+      <GetParameterInt64 param="sample_pulse_s" value="{sample_pulse_s}"/>
+
       <GetParameterInt64 param="command_keepalive_s" value="{command_keepalive_s}"/>
       <GetParameterInt64 param="command_min_spacing_ms" value="{command_min_spacing_ms}"/>
 
@@ -47,13 +53,31 @@
         <PeriodicPulseWindow enabled="false" active="{dose2_active}" pulse_index="{dose2_pulse_index}" elapsed_ms="{dose2_elapsed_ms}"/>
       </Fallback>
 
-      <!-- dcmt0: sample channel held off, impeller controlled -->
+      <!-- The sampler, scheduled as the doses are, with no rate cap (#127). -->
+      <Fallback name="sample_schedule_or_off">
+        <PeriodicPulseWindow enabled="{sample_enable}" startup_delay_s="{sample_startup_delay_s}" interval_s="{sample_interval_s}" pulse_s="{sample_pulse_s}" active="{sample_active}" pulse_index="{sample_pulse_index}" elapsed_ms="{sample_elapsed_ms}"/>
+        <PeriodicPulseWindow enabled="false" active="{sample_active}" pulse_index="{sample_pulse_index}" elapsed_ms="{sample_elapsed_ms}"/>
+      </Fallback>
+
+      <!-- dcmt0: sample pump on motor 1, impeller on motor 2 -->
       <Fallback name="compose_dcmt0_open_loop_args">
         <Sequence>
+          <CheckBool value="{sample_active}" expected="true"/>
+          <CheckBool value="{impeller_enable}" expected="true"/>
+          <BuildArgsJson arg1_name="motor1_pwm" arg1_type="int64" arg1_num="{sample_pwm}" arg2_name="motor2_pwm" arg2_type="int64" arg2_num="{impeller_pwm}" json="{dcmt0_open_loop_args}"/>
+        </Sequence>
+        <Sequence>
+          <CheckBool value="{sample_active}" expected="true"/>
+          <CheckBool value="{impeller_enable}" expected="false"/>
+          <BuildArgsJson arg1_name="motor1_pwm" arg1_type="int64" arg1_num="{sample_pwm}" arg2_name="motor2_pwm" arg2_type="int64" arg2_num="0" json="{dcmt0_open_loop_args}"/>
+        </Sequence>
+        <Sequence>
+          <CheckBool value="{sample_active}" expected="false"/>
           <CheckBool value="{impeller_enable}" expected="true"/>
           <BuildArgsJson arg1_name="motor1_pwm" arg1_type="int64" arg1_num="0" arg2_name="motor2_pwm" arg2_type="int64" arg2_num="{impeller_pwm}" json="{dcmt0_open_loop_args}"/>
         </Sequence>
         <Sequence>
+          <CheckBool value="{sample_active}" expected="false"/>
           <CheckBool value="{impeller_enable}" expected="false"/>
           <BuildArgsJson arg1_name="motor1_pwm" arg1_type="int64" arg1_num="0" arg2_name="motor2_pwm" arg2_type="int64" arg2_num="0" json="{dcmt0_open_loop_args}"/>
         </Sequence>
