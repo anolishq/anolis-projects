@@ -105,7 +105,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.10.0"
+    version: "0.10.1"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
