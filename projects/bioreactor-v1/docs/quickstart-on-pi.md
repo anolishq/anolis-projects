@@ -68,7 +68,9 @@ git clone --depth 1 https://github.com/anolishq/anolis-projects.git
 export PROJ=~/anolis/anolis-projects/projects/bioreactor-v1
 
 # Host prep: I²C on, the 50 kHz bus clock with the core clock pinned, i2c-dev,
-# and the anolis user with access to the bus. Safe to re-run.
+# and the anolis user with access to the bus. Safe to re-run. Before its first
+# change it saves config.txt as config.txt.host-prep.bak beside it, and it
+# refuses a board that is not a Pi 4 (--any-board overrides).
 sudo bash "$PROJ/host/prep-raspberrypi-os.sh"
 sudo reboot                                # only if it printed REBOOT REQUIRED
 ```

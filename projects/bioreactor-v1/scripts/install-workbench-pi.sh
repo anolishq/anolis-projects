@@ -74,9 +74,10 @@ case ":${PATH}:" in
 esac
 log "launcher: ${BIN_LINK}  (serves http://127.0.0.1:3010)"
 
-# 4. Launch (opens the default browser at :3010; the Pi needs a desktop session).
+# 4. Launch. On a Pi the workbench opens no browser (its appliance mode): browse
+#    to :3010 on the Pi, or from another machine over the ssh tunnel it prints.
 if [[ "${LAUNCH}" == "1" ]]; then
-  warn "launching — a browser should open at http://127.0.0.1:3010 (Ctrl-C to stop the server)"
+  warn "launching — no browser opens on a Pi; browse to http://127.0.0.1:3010 here, or from another machine over the ssh tunnel printed below (Ctrl-C to stop the server)"
   exec "${VENV}/bin/anolis-workbench"
 else
   echo "Run it later with:  ${BIN_LINK}   (then open http://127.0.0.1:3010)"
