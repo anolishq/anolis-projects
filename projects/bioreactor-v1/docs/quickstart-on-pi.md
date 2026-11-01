@@ -114,7 +114,7 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 There is no Pi desktop installer; the workbench runs as a local server you open in
 a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
 bare `pip install`) from the pure-python PyPI wheel, at the version the script
-pins (`WORKBENCH_VERSION`, 0.29.0 in this revision; Renovate bumps it). Set
+pins (`WORKBENCH_VERSION`, 0.30.0 in this revision; Renovate bumps it). Set
 `ANOLIS_WORKBENCH_VERSION` to install another:
 
 ```bash
@@ -385,18 +385,20 @@ at 0x0A) was walked through §5 on a fresh card on **2026-10-12**, with workbenc
 had §2 and §4 walked on the `manual` variant on **2026-10-27**, as an upgrade
 from anolis 0.1.55 on an already-prepped host; §3, §5–§7 and dashboards with
 live data were not. The next, pinning anolis 0.1.57, changed only the bundled
-Grafana dashboards. This revision pins anolis 0.9.2, bread 0.10.0,
-workbench 0.29.0 and telemetry-export 0.2.0. It had §0–§5 walked on
-**2026-11-01** on the reference rig, in place on a host already running these
+Grafana dashboards. The revision pinning anolis 0.9.2, bread 0.10.0,
+workbench 0.29.0 and telemetry-export 0.2.0 had §0–§5 walked on
+**2026-11-01** on the reference rig, in place on a host already running those
 pins: every check passed, and §4's two dashboards showed live data. §0's
 `i2cdetect` and DO commands were not run, because the running runtime held the
 bus; §4's five devices and `do_saturation_pct` reading OK stood in for them.
-§6–§7 were not run. The revision pinning anolis 0.6.0 and workbench 0.27.0 had §5
+§6–§7 were not run. This revision pins anolis 0.10.0 and workbench 0.30.0
+(bread 0.10.0, telemetry-export 0.2.0 unchanged) and has not been walked on
+hardware. The revision pinning anolis 0.6.0 and workbench 0.27.0 had §5
 checked on **2026-10-30** on a Pi, with no
 environment variables and no import by hand: at startup the workbench imported
 bioreactor-v1 from `/opt/anolis`, and Operate's proxied runtime status answered
 200. anolis 0.2.0 through
-0.9.0 and bread 0.10.0 each change what an existing install does, so read
+0.10.0 and bread 0.10.0 each change what an existing install does, so read
 their upgrade notes before upgrading: browser origins not listed in
 `http.cors_allowed_origins` are
 refused, an install whose safe state cannot be planned fails, bread drives its
@@ -413,6 +415,8 @@ is dropped rather than retried, a device call automation keeps failing puts the
 runtime in FAULT (three in a row by default; a dose pump left braked in AUTO
 now faults after three refused pulses), and the operator panel's
 `experiment` is now `run`: with workbench 0.29.0, Start run runs the groups
-ticked On and no longer switches them on itself. The
+ticked On and no longer switches them on itself, and from anolis 0.10.0 the
+deprecated flat `telemetry.influx_*` keys are applied rather than dropped
+(this project's configs use the nested ones). The
 `automation` and `full` variants set `automation.on_terminal: repeat`, so the
 tree is still ticked again after each pass, as before.
