@@ -85,6 +85,22 @@ operator:
       parameter: sample_requests
       require:
         - { signal: bread0/dcmt0/motor1_brake, equals: false, message: "Release the sample pump's brake" }
+  # After a watchdog-trip clear (anolis 0.10.1, workbench 0.31.0): a DCMT's
+  # trip engages both brakes, and nothing turns until they are released. The
+  # RLHT needs nothing after its clear.
+  trip_recovery:
+    - device: bread0/dcmt0
+      after_clear:
+        - label: Release both brakes
+          function: set_brake
+          args: { motor1_brake: false, motor2_brake: false }
+          confirm: true
+    - device: bread0/dcmt1
+      after_clear:
+        - label: Release both brakes
+          function: set_brake
+          args: { motor1_brake: false, motor2_brake: false }
+          confirm: true
   run:
     label: Run
     start:
@@ -105,7 +121,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.10.0"
+    version: "0.10.1"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
