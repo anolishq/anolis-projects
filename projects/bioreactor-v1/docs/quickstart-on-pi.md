@@ -114,7 +114,7 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 There is no Pi desktop installer; the workbench runs as a local server you open in
 a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
 bare `pip install`) from the pure-python PyPI wheel, at the version the script
-pins (`WORKBENCH_VERSION`, 0.30.0 in this revision; Renovate bumps it). Set
+pins (`WORKBENCH_VERSION`, 0.31.0 in this revision; Renovate bumps it). Set
 `ANOLIS_WORKBENCH_VERSION` to install another:
 
 ```bash
@@ -391,9 +391,12 @@ workbench 0.29.0 and telemetry-export 0.2.0 had §0–§5 walked on
 pins: every check passed, and §4's two dashboards showed live data. §0's
 `i2cdetect` and DO commands were not run, because the running runtime held the
 bus; §4's five devices and `do_saturation_pct` reading OK stood in for them.
-§6–§7 were not run. This revision pins anolis 0.10.0 and workbench 0.30.0
+§6–§7 were not run. This revision pins anolis 0.10.1 and workbench 0.31.0
 (bread 0.10.0, telemetry-export 0.2.0 unchanged) and has not been walked on
-hardware. The revision pinning anolis 0.6.0 and workbench 0.27.0 had §5
+hardware. Its `trip_recovery` was checked on **2026-11-01** on the reference
+rig with anolis 0.10.1 and a build of workbench 0.31.0's change: three boards
+tripped on purpose were cleared in Operate, the RLHT with nothing after the
+clear and each DCMT with "Release both brakes" from this profile. The revision pinning anolis 0.6.0 and workbench 0.27.0 had §5
 checked on **2026-10-30** on a Pi, with no
 environment variables and no import by hand: at startup the workbench imported
 bioreactor-v1 from `/opt/anolis`, and Operate's proxied runtime status answered
@@ -417,6 +420,9 @@ now faults after three refused pulses), and the operator panel's
 `experiment` is now `run`: with workbench 0.29.0, Start run runs the groups
 ticked On and no longer switches them on itself, and from anolis 0.10.0 the
 deprecated flat `telemetry.influx_*` keys are applied rather than dropped
-(this project's configs use the nested ones). The
+(this project's configs use the nested ones), and with workbench 0.31.0 the
+steps after a watchdog-trip clear are this profile's `operator.trip_recovery`
+rather than built in, and an Operate page asks for a reload once the
+workbench restarts or is upgraded under it. The
 `automation` and `full` variants set `automation.on_terminal: repeat`, so the
 tree is still ticked again after each pass, as before.
