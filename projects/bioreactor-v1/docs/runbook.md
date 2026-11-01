@@ -126,6 +126,9 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `sample_startup_delay_s`    | int64 | 60      | Delay before the first sample pulse   |
 | `sample_interval_s`         | int64 | 900     | Interval between sample pulses        |
 | `sample_pulse_s`            | int64 | 5       | Duration of a sample pulse; must be less than `sample_interval_s` |
+| `sample_requests`           | int64 | 0       | "Sample now" counter: each increase runs one sample pulse |
+| `sample_request_delay_s`    | int64 | 0       | Delay from a "Sample now" press to its pulse |
+| `sample_request_pulse_s`    | int64 | 5       | Duration of a "Sample now" pulse      |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
 
@@ -138,6 +141,18 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 > (anolishq/anolis-projects#103). `validation/check_invalid_dose_schedule.py`
 > checks this against a mock bread provider, and `validation/check_sampler.py`
 > checks the sampler the same way (anolishq/anolis-projects#127).
+
+> **"Sample now" runs the sample pump once per press**, beside the periodic
+> schedule. The operator panel's button increases `sample_requests` by one; in
+> AUTO the tree runs the pump at `sample_pwm`, `sample_request_delay_s` after
+> the press, for `sample_request_pulse_s`. A press while a requested pulse is
+> waiting or running adds nothing (`max_queued` 1). The panel refuses a press
+> outside AUTO, since the tree reads presses only while it runs. The periodic and requested pulses share the pump: it runs
+> while either is on and stops only when both are off, so neither cuts the
+> other short. `sample_enable` switches only the periodic schedule. Start's
+> sample-pump brake check applies while `sample_enable` is on, so with the
+> periodic schedule off, check that brake by hand before pressing.
+> `validation/check_sample_now.py` checks this against a mock bread provider.
 
 > **Parameters are not persisted.** Every value above reverts to the default in
 > this table whenever the runtime restarts — including across an upgrade. A
@@ -166,7 +181,7 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 
 | Device       | Channel | Assignment                                     |
 | ------------ | ------- | ---------------------------------------------- |
-| dcmt0 (0x14) | motor1  | Sample pump: `sample_*` schedule in automation |
+| dcmt0 (0x14) | motor1  | Sample pump: `sample_*` schedule and "Sample now" in automation |
 | dcmt0 (0x14) | motor2  | Impeller (stirring)                            |
 | dcmt1 (0x15) | motor1  | Dosing pump 1                                  |
 | dcmt1 (0x15) | motor2  | Dosing pump 2                                  |
