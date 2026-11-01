@@ -171,7 +171,9 @@ config_set() {
 echo "bioreactor-v1 host prep ($([[ ${CHECK} -eq 1 ]] && echo check only || echo apply))"
 
 # --- board: the values here were measured on a Pi 4 -----------------------------
-model=$(tr -d '\0' < "${MODEL_FILE}" 2>/dev/null || true)
+# The braces put the redirect under 2>/dev/null too: a missing file fails the
+# redirect itself, before tr runs.
+model=$( { tr -d '\0' < "${MODEL_FILE}"; } 2>/dev/null || true)
 if [[ "${model}" == "${BOARD}"* ]]; then
     ok "board: ${model}"
 elif [[ ${CHECK} -eq 1 || ${ANY_BOARD} -eq 1 ]]; then

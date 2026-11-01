@@ -206,7 +206,18 @@ else
   fail "--any-board on a Pi 5 exited $(rc pi5): $(cat "${tmp}/pi5/out.log")"
 fi
 
-# 8. An unknown argument is a usage error.
+# 8. With no device-tree model the board reads as unknown, without a stray
+#    error from the shell.
+new_host nomodel "${PI4}"
+rm -f "${tmp}/nomodel/model"
+prep nomodel --check
+if grep -q 'board: unknown' "${tmp}/nomodel/out.log" && ! grep -q 'No such file' "${tmp}/nomodel/out.log"; then
+  pass "a missing model file reads as board: unknown, with no shell error"
+else
+  fail "a missing model file: $(cat "${tmp}/nomodel/out.log")"
+fi
+
+# 9. An unknown argument is a usage error.
 new_host usage "${PI4}"
 prep usage --bogus
 if [[ "$(rc usage)" == 64 ]]; then pass "an unknown argument exits 64"; else fail "an unknown argument exited $(rc usage)"; fi
