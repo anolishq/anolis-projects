@@ -116,6 +116,14 @@ below to check the result.
   in the reference solution, or in air for DO atmospheric, until the reading in
   Operate's Readings panel or Grafana is steady. Calibrate only once it is.
 - Use the value printed on the solution's label for `reference_ph`.
+- Allow time. On the reference rig on 2026-11-02, pH took about 20 minutes to
+  settle in each buffer, and DO 20 to 30 minutes in air, longer after the
+  zero-oxygen solution. A reading still moving by more than its minute-to-minute
+  noise is not ready.
+- Check pH 10 buffer against an independent one before calibrating `high`. It
+  degrades in air: two old bottles read 8.99 and 9.26 where a fresh lab buffer
+  read 9.93, and calibrating `high` on them would have set a badly wrong
+  alkaline slope.
 
 **Mode.** Both functions run only in MANUAL.
 
@@ -137,8 +145,11 @@ when it kept one.
   points. A full calibration is `mid`, then `low`, then `high`, each with the
   probe in that solution and `reference_ph` set to its printed value.
 - DO: `atmospheric` alone is a valid single-point calibration. For two points,
-  do `zero` (zero-oxygen solution) first, then `atmospheric`. Compensation stays
-  at its defaults; the provider never changes it (anolis-provider-ezo#146).
+  do `zero` (zero-oxygen solution) first, then `atmospheric`. In the zero
+  solution the probe reads 0.0 as its floor, so its settling cannot be watched:
+  give it a few minutes, then calibrate. Compensation stays at its defaults; the
+  provider never changes it (anolis-provider-ezo#146), so the in-air reading
+  drifts a few percent with room temperature after calibrating.
 
 **Check the result.**
 
