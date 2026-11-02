@@ -103,8 +103,8 @@ For a fresh Raspberry Pi (workbench-on-Pi + provisioning), follow
 
 `ph0` and `do0` calibrate through their own functions, from Operate or the
 runtime API. Needs anolis-provider-ezo 0.5.0 or later for `calibrate` and
-`clear_calibration`, and the release after it for the calibration-level signals
-used below to check the result.
+`clear_calibration`, and 0.5.1 or later for the calibration-level signals used
+below to check the result.
 
 **Before you start**
 
