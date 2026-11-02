@@ -99,6 +99,77 @@ anolis-workbench
 For a fresh Raspberry Pi (workbench-on-Pi + provisioning), follow
 [`docs/quickstart-on-pi.md`](./quickstart-on-pi.md).
 
+## Probe calibration (pH and DO)
+
+`ph0` and `do0` calibrate through their own functions, from Operate or the
+runtime API. Needs anolis-provider-ezo 0.5.0 or later for `calibrate` and
+`clear_calibration`, and 0.5.1 or later for the calibration-level signals used
+below to check the result.
+
+**Before you start**
+
+- Never run the ADPP conformance harness against these probes: it calls
+  `calibrate` and `clear_calibration` and overwrites their calibration.
+- The software stop must be clear. While it is latched the runtime refuses both
+  functions, like any CONFIG function.
+- Let the probe reach its operating temperature (DO: about 10 minutes) and sit
+  in the reference solution, or in air for DO atmospheric, until the reading in
+  Operate's Readings panel or Grafana is steady. Calibrate only once it is.
+- Use the value printed on the solution's label for `reference_ph`.
+- Allow time. On the reference rig on 2026-11-02, pH took about 20 minutes to
+  settle in each buffer, and DO 20 to 30 minutes in air, longer after the
+  zero-oxygen solution. A reading still moving by more than its minute-to-minute
+  noise is not ready.
+- Check pH 10 buffer against an independent one before calibrating `high`. It
+  degrades in air: two old bottles read 8.99 and 9.26 where a fresh lab buffer
+  read 9.93, and calibrating `high` on them would have set a badly wrong
+  alkaline slope.
+
+**Mode.** Both functions run only in MANUAL.
+
+- With automation enabled (the `automation` and `full` variants, and any
+  installed `/opt/anolis/config/runtime.yaml` with `automation.enabled: true`):
+  in Operate, set the mode to MANUAL. IDLE refuses every call, and so does
+  AUTO under this project's `manual_gating_policy: BLOCK` ("Manual call blocked
+  in AUTO mode"). The functions themselves also refuse any mode but MANUAL.
+- With automation disabled (`manual`, `telemetry`) there is no mode manager and
+  the runtime treats calls as MANUAL, so there is no mode step.
+
+`install.sh` keeps an existing `runtime.yaml`, so check what is installed
+rather than the variant you asked for: it says "`--variant ... NOT applied`"
+when it kept one.
+
+**Calibrate.** In Operate, open Devices, pick `ph0` or `do0`, then `calibrate`.
+
+- pH: `mid` first, because calibrating the midpoint clears the low and high
+  points. A full calibration is `mid`, then `low`, then `high`, each with the
+  probe in that solution and `reference_ph` set to its printed value.
+- DO: `atmospheric` alone is a valid single-point calibration. For two points,
+  do `zero` (zero-oxygen solution) first, then `atmospheric`. In the zero
+  solution the probe reads 0.0 as its floor, so its settling cannot be watched:
+  give it a few minutes, then calibrate. Compensation stays at its defaults; the
+  provider never changes it (anolis-provider-ezo#146), so the in-air reading
+  drifts a few percent with room temperature after calibrating.
+
+**Check the result.**
+
+- A rejected calibration fails the call with the device's error next to the
+  form, for example "device rejected the command (response code 2, syntax
+  error)". The probe's calibration is unchanged.
+- `ph_calibration_level` (0 to 3) and `do_calibration_level` (0 to 2) show the
+  points the probe now holds. After a pH `mid` it reads 1, after `low` 2, after
+  `high` 3; after DO `atmospheric` alone, 1. If it reads unavailable, the
+  provider could not read it back: the calibration may still have taken, so
+  check the reading against the solution.
+- Every call that reaches a provider is logged by the runtime.
+
+**Clearing.** `clear_calibration` deletes every calibration point on the probe
+in one click, with no confirmation (anolis-workbench#799). Use it only to start
+over, and calibrate straight after.
+
+**Finish.** Return the mode to where it was: IDLE, or AUTO to resume the
+automation.
+
 ## Automation parameter reference
 
 All parameters are runtime-tunable over HTTP (`POST /v0/parameters` on the
