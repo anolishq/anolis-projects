@@ -128,7 +128,7 @@ components:
       version: "0.10.0"
     ezo:
       repo: anolishq/anolis-provider-ezo
-      version: "0.4.1"
+      version: "0.5.0"
   optional:
     telemetry_export:
       package: anolis-telemetry-export
