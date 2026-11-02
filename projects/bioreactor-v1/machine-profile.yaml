@@ -121,7 +121,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.10.1"
+    version: "0.10.2"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread

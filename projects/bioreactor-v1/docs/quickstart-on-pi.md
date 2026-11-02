@@ -114,7 +114,7 @@ sudo i2ctransfer -y 1 w3@0x61 0x4f 0x2c 0x3f; sleep 0.6; sudo i2ctransfer -y 1 r
 There is no Pi desktop installer; the workbench runs as a local server you open in
 a browser. The bootstrap installs it into an isolated venv (Raspberry Pi OS blocks
 bare `pip install`) from the pure-python PyPI wheel, at the version the script
-pins (`WORKBENCH_VERSION`, 0.31.0 in this revision; Renovate bumps it). Set
+pins (`WORKBENCH_VERSION`, 0.33.0 in this revision; Renovate bumps it). Set
 `ANOLIS_WORKBENCH_VERSION` to install another:
 
 ```bash
