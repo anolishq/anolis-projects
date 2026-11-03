@@ -263,18 +263,12 @@ for p in json.load(sys.stdin)['providers']:
       Adding `--with-grafana-network` to the §2 install line opens Grafana to
       the LAN instead.
 
-> **`rlht0`'s `t2_c` is left out of device health.** Only TC1 has a
-> thermocouple. The empty TC2 reads one of two ways, depending on how it is
-> empty: quality `FAULT` when the MAX6675 sees an open probe, or `0.0` °C with
-> quality `OK` when its MISO line is stuck low (feastorg/Slice_RLHT#48). On
-> the reference rig it read `FAULT` on 2026-10-12, and `0.0` `OK` from
-> 2026-10-16. Neither is a temperature, so the runtime configs'
-> `health.excluded_signals` drops `t2_c` from `rlht0`'s health, and `rlht0`
-> reads OK. `t2_c` is still read, served and recorded with its own
-> quality. If you fit a second thermocouple, delete the `bread0/rlht0` entry so a
-> fault on TC2 shows again. A misspelt entry excludes nothing: the runtime logs a
-> WARN naming it after discovery, and `rlht0` reads FAULT as before
-> (anolishq/anolis#325).
+> **`rlht0` has two thermocouples:** TC1 in the liquid (`t1_c`) and TC2 on
+> the heater pad surface (`t2_c`). Both count toward `rlht0`'s health. On a
+> rig without TC2, the empty channel reads quality `FAULT` (open probe) or
+> `0.0` °C with quality `OK` (MAX6675 MISO stuck low,
+> feastorg/Slice_RLHT#48); leave it out of health with
+> `health.excluded_signals` (anolishq/anolis#325).
 
 ## 5. Operate from the workbench
 
@@ -374,7 +368,6 @@ them about:
 | §0 | the DO circuit's % saturation output is off out of the box; turn it on before installing | — |
 | §2 | the install renames the Pi to `anolis-<serial>` | — |
 | §3 | must activate the `automation` variant; provisioning does not do it for you | — |
-| §4 | `rlht0`'s `t2_c` is left out of device health; delete that entry if a second thermocouple is fitted | anolishq/anolis#325 |
 
 Walked end-to-end on real hardware **2026-08-03** (fresh wipe → install of
 v0.1.40 → workbench 0.14.0 → software e-stop verified stopping a live impeller).

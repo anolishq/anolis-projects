@@ -44,8 +44,9 @@ operator:
   readings:
     - { signal: ezo0/ph0/ph_value, label: pH, decimals: 2 }
     - { signal: ezo0/do0/do_mg_l, label: Dissolved oxygen, unit: mg/L, decimals: 2 }
-    # Only TC1 has a thermocouple fitted (see health.excluded_signals).
+    # TC1 is in the liquid; TC2 is on the heater pad surface.
     - { signal: bread0/rlht0/t1_c, label: Temperature, unit: "°C", decimals: 1 }
+    - { signal: bread0/rlht0/t2_c, label: Heater surface, unit: "°C", decimals: 1 }
   settings:
     - group: Stirring
       items:

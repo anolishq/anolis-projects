@@ -25,7 +25,9 @@ devices:
     type: rlht
     label: Reactor Temperature Node
     address: 0x13
-    command_watchdog_ms: 5000
+    # Four poll intervals (polling.interval_ms 2500): at 5000 one late poll
+    # tripped the slice and latched the heater off.
+    command_watchdog_ms: 10000
   - id: dcmt0
     type: dcmt
     label: Reactor Sampling + Stirring (ch1 sample, ch2 stir)
