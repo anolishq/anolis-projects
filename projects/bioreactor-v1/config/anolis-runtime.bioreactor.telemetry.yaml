@@ -44,16 +44,6 @@ providers:
 polling:
   interval_ms: 2500
 
-# Signals left out of device health. They are still polled, served over
-# HTTP and recorded; only the device health rollup skips them.
-health:
-  excluded_signals:
-    # Only TC1 has a thermocouple fitted. The empty TC2 channel reads FAULT, or
-    # 0.0 C with quality OK when its MAX6675's MISO is stuck low
-    # (feastorg/Slice_RLHT#48), so its health is not a fault signal either way.
-    - device_handle: bread0/rlht0
-      signals: [t2_c]
-
 telemetry:
   enabled: true
   # Token via INFLUXDB_TOKEN env (/etc/anolis/runtime.env), not this file.
