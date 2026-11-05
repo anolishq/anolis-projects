@@ -7,6 +7,9 @@
       and one sample per "Sample now" request on the same pump
     - Run two independent dosing schedules on dcmt1 (motor1=dose1, motor2=dose2)
     - Emit set_open_loop only on command change or keepalive
+    - Hold the heater (rlht0) at a pad setpoint, or off, re-sending its
+      settings on change or keepalive
+    - Set the pH and DO temperature compensation
 
     All machine semantics live in config/BT assets; core runtime remains provider-agnostic.
   -->
@@ -38,6 +41,10 @@
       <GetParameterInt64 param="sample_requests" value="{sample_requests}"/>
       <GetParameterInt64 param="sample_request_delay_s" value="{sample_request_delay_s}"/>
       <GetParameterInt64 param="sample_request_pulse_s" value="{sample_request_pulse_s}"/>
+
+      <GetParameterBool param="heater_enable" value="{heater_enable}"/>
+      <GetParameter param="heater_pad_setpoint_c" value="{heater_pad_setpoint_c}"/>
+      <GetParameter param="compensation_temp_c" value="{compensation_temp_c}"/>
 
       <GetParameterInt64 param="command_keepalive_s" value="{command_keepalive_s}"/>
       <GetParameterInt64 param="command_min_spacing_ms" value="{command_min_spacing_ms}"/>
@@ -158,6 +165,81 @@
         <Sequence>
           <CheckBool value="{dcmt1_emit}" expected="true"/>
           <CallDevice device_handle="bread0/dcmt1" function_name="set_open_loop" args="{dcmt1_open_loop_args}" reason="{dcmt1_emit_reason}" success="{dcmt1_write_ok}" error="{dcmt1_write_error}"/>
+        </Sequence>
+        <AlwaysSuccess/>
+      </Fallback>
+
+      <!--
+        rlht0: the heater pads on relay 1, in a loop closed on the pad
+        thermocouple (TC2), so heater_pad_setpoint_c caps the pad temperature.
+        The slice keeps its settings in RAM only and boots with defaults, so
+        every emit, including the keepalive, sends all five: a slice that lost
+        power is set up again within command_keepalive_s. Sending the same
+        values again changes nothing on the slice: Slice_RLHT applies a mode
+        or gains only when they differ from what it holds.
+
+        On: in this order, stopping at the first failure, so the loop is
+        never closed with the wrong thermocouple or gains. tc_select 2 / 1:
+        channel 1 follows TC2; not 2 / 2, which firmware may come to refuse
+        (feastorg/Slice_RLHT#52). The 10 s period saves the relay.
+
+        Off: the three calls of the safe state, each sent even if another
+        fails.
+      -->
+      <BuildArgsJson arg1_name="heater_enable" arg1_type="bool" arg1_bool="{heater_enable}" arg2_name="pad_setpoint_c" arg2_type="double" arg2_num="{heater_pad_setpoint_c}" json="{rlht0_key}"/>
+      <EmitOnChangeOrInterval key="{rlht0_key}" keepalive_s="{command_keepalive_s}" min_spacing_ms="{command_min_spacing_ms}" emit="{rlht0_emit}" reason="{rlht0_emit_reason}"/>
+
+      <Fallback name="write_rlht0_if_emit">
+        <Sequence name="heater_on">
+          <CheckBool value="{rlht0_emit}" expected="true"/>
+          <CheckBool value="{heater_enable}" expected="true"/>
+          <BuildArgsJson arg1_name="period1_ms" arg1_type="int64" arg1_num="10000" arg2_name="period2_ms" arg2_type="int64" arg2_num="10000" json="{rlht0_periods_args}"/>
+          <CallDevice device_handle="bread0/rlht0" function_name="set_periods_ms" args="{rlht0_periods_args}" reason="{rlht0_emit_reason}"/>
+          <BuildArgsJson arg1_name="tc1_index" arg1_type="int64" arg1_num="2" arg2_name="tc2_index" arg2_type="int64" arg2_num="1" json="{rlht0_tc_args}"/>
+          <CallDevice device_handle="bread0/rlht0" function_name="set_tc_select" args="{rlht0_tc_args}" reason="{rlht0_emit_reason}"/>
+          <BuildArgsJson arg1_name="kp1_x10" arg1_type="int64" arg1_num="255" arg2_name="ki1_x10" arg2_type="int64" arg2_num="10" arg3_name="kd1_x10" arg3_type="int64" arg3_num="0" arg4_name="kp2_x10" arg4_type="int64" arg4_num="0" arg5_name="ki2_x10" arg5_type="int64" arg5_num="0" arg6_name="kd2_x10" arg6_type="int64" arg6_num="0" json="{rlht0_pid_args}"/>
+          <CallDevice device_handle="bread0/rlht0" function_name="set_pid_x10" args="{rlht0_pid_args}" reason="{rlht0_emit_reason}"/>
+          <BuildArgsJson arg1_name="mode" arg1_type="string" arg1_str="closed_loop" json="{rlht0_mode_args}"/>
+          <CallDevice device_handle="bread0/rlht0" function_name="set_mode" args="{rlht0_mode_args}" reason="{rlht0_emit_reason}"/>
+          <BuildArgsJson arg1_name="setpoint1_c" arg1_type="double" arg1_num="{heater_pad_setpoint_c}" arg2_name="setpoint2_c" arg2_type="double" arg2_num="0" json="{rlht0_setpoints_args}"/>
+          <CallDevice device_handle="bread0/rlht0" function_name="set_setpoints" args="{rlht0_setpoints_args}" reason="{rlht0_emit_reason}"/>
+        </Sequence>
+        <Sequence name="heater_off">
+          <CheckBool value="{rlht0_emit}" expected="true"/>
+          <CheckBool value="{heater_enable}" expected="false"/>
+          <BuildArgsJson arg1_name="setpoint1_c" arg1_type="double" arg1_num="0" arg2_name="setpoint2_c" arg2_type="double" arg2_num="0" json="{rlht0_off_setpoints_args}"/>
+          <ForceSuccess>
+            <CallDevice device_handle="bread0/rlht0" function_name="set_setpoints" args="{rlht0_off_setpoints_args}" reason="{rlht0_emit_reason}"/>
+          </ForceSuccess>
+          <BuildArgsJson arg1_name="mode" arg1_type="string" arg1_str="open_loop" json="{rlht0_off_mode_args}"/>
+          <ForceSuccess>
+            <CallDevice device_handle="bread0/rlht0" function_name="set_mode" args="{rlht0_off_mode_args}" reason="{rlht0_emit_reason}"/>
+          </ForceSuccess>
+          <BuildArgsJson arg1_name="duty1_pct" arg1_type="int64" arg1_num="0" arg2_name="duty2_pct" arg2_type="int64" arg2_num="0" json="{rlht0_off_duty_args}"/>
+          <ForceSuccess>
+            <CallDevice device_handle="bread0/rlht0" function_name="set_open_duty_pct" args="{rlht0_off_duty_args}" reason="{rlht0_emit_reason}"/>
+          </ForceSuccess>
+        </Sequence>
+        <AlwaysSuccess/>
+      </Fallback>
+
+      <!--
+        pH and DO temperature compensation, set to compensation_temp_c on
+        entering AUTO and whenever it changes; no keepalive. The EZO provider
+        sends the values again itself when a probe loses power, and a call
+        that kept failing would put the run in FAULT.
+      -->
+      <BuildArgsJson arg1_name="temperature_c" arg1_type="double" arg1_num="{compensation_temp_c}" json="{compensation_args}"/>
+      <EmitOnChangeOrInterval key="{compensation_args}" keepalive_s="0" min_spacing_ms="{command_min_spacing_ms}" emit="{compensation_emit}" reason="{compensation_emit_reason}"/>
+      <Fallback name="write_compensation_if_emit">
+        <Sequence>
+          <CheckBool value="{compensation_emit}" expected="true"/>
+          <ForceSuccess>
+            <CallDevice device_handle="ezo0/ph0" function_name="set_compensation" args="{compensation_args}" reason="{compensation_emit_reason}"/>
+          </ForceSuccess>
+          <ForceSuccess>
+            <CallDevice device_handle="ezo0/do0" function_name="set_compensation" args="{compensation_args}" reason="{compensation_emit_reason}"/>
+          </ForceSuccess>
         </Sequence>
         <AlwaysSuccess/>
       </Fallback>

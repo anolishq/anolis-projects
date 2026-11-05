@@ -147,9 +147,12 @@ when it kept one.
 - DO: `atmospheric` alone is a valid single-point calibration. For two points,
   do `zero` (zero-oxygen solution) first, then `atmospheric`. In the zero
   solution the probe reads 0.0 as its floor, so its settling cannot be watched:
-  give it a few minutes, then calibrate. Compensation stays at its defaults; the
-  provider never changes it (anolis-provider-ezo#146), so the in-air reading
-  drifts a few percent with room temperature after calibrating.
+  give it a few minutes, then calibrate. `calibrate` runs at the default
+  compensation (20 °C, salinity 0, 101.3 kPa), as the datasheet expects, then
+  sends back the compensation set before (anolis-provider-ezo 0.6.0+).
+- Compensation: in AUTO the tree sets both probes to `compensation_temp_c` on
+  entering AUTO and whenever it changes, replacing any value set by hand in
+  MANUAL.
 
 **Check the result.**
 
@@ -192,9 +195,28 @@ undersized supply showed up as 2.6 A instead of 3 A.
 
 **Control.** Close the loop on the pad, not the liquid. The pad setpoint
 then caps the pad temperature, and an open pad thermocouple stops the heater.
-In MANUAL, on rlht0, make these calls, filling every argument **by name**:
-Operate lists arguments alphabetically (anolis-workbench#807), so entering
-them in order puts values in the wrong boxes.
+
+In AUTO the behavior tree does this. On the operator panel, set the
+**Heater** group's pad setpoint and turn it on. While it is on, the tree sends
+the five settings below on entering AUTO, whenever the setpoint changes, and
+again every `command_keepalive_s` (30 s), so a slice that lost power is set up
+again within about 30 s. While it is off, the tree turns the heater off. The
+heater's mode-transition behaviour:
+
+- AUTO → MANUAL leaves the heater as the tree last set it, so a routine
+  hand-off doesn't cool the culture;
+- MANUAL → IDLE, FAULT and the software e-stop turn it off;
+- Stop on the operator panel turns the heater setting off, as it does the
+  motors.
+
+After a hardware e-stop is released in AUTO, the heater comes back on with the
+motors. `validation/check_heater.py` checks the tree and these hooks against
+the mock providers.
+
+In MANUAL, nothing re-sends the settings. Make these calls on rlht0, filling
+every argument **by name**: Operate lists arguments alphabetically
+(anolis-workbench#807), so entering them in order puts values in the wrong
+boxes.
 
 1. `set_periods_ms`: `period1_ms` 10000, `period2_ms` 10000. A 10 s window
    saves relay wear, and the liquid's response is hours, not seconds.
@@ -207,11 +229,11 @@ them in order puts values in the wrong boxes.
 4. `set_mode`: `closed_loop`.
 5. `set_setpoints`: `setpoint1_c` = the pad setpoint, `setpoint2_c` 0.
 
-**After any power loss to the slices, send all five again.** That covers a
-hardware e-stop, a supply change, or the Pi losing power. The slice keeps them
-in RAM only, and boots with defaults: period 1000 ms, gains 1 / 0 / 0, each
-channel on its own thermocouple. Until the provider re-applies them
-(anolis-provider-bread#220), check them by reading back `period1_ms` and
+**In MANUAL, after any power loss to the slices, send all five again.** That
+covers a hardware e-stop, a supply change, or the Pi losing power. The slice
+keeps them in RAM only, and boots with defaults: period 1000 ms, gains
+1 / 0 / 0, each channel on its own thermocouple. Until the provider re-applies
+them (anolis-provider-bread#220), check them by reading back `period1_ms` and
 `mode`, and confirm the relay comes on. `set_tc_select` and the gains have no
 readback yet (anolis-provider-bread#222). If the Pi boots before the slices
 answer, rlht0 isn't registered at all: restart the runtime once the slices
@@ -292,7 +314,10 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `sample_requests`           | int64 | 0       | "Sample now" counter: each increase runs one sample pulse |
 | `sample_request_delay_s`    | int64 | 0       | Delay from a "Sample now" press to its pulse |
 | `sample_request_pulse_s`    | int64 | 5       | Duration of a "Sample now" pulse      |
-| `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor commands |
+| `heater_enable`             | bool  | false   | Hold the heater at the pad setpoint; off turns the heater off (see "Heater") |
+| `heater_pad_setpoint_c`     | double | 0.0    | Pad setpoint, 0–65 °C; 0 is off. The liquid settles well below it |
+| `compensation_temp_c`       | double | 25.0   | Temperature the pH and DO probes compensate for, 0–100 °C; sent on entering AUTO and on change |
+| `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor and heater commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
 
 > **A dose or sample pulse must be shorter than its interval.** Each parameter
@@ -328,8 +353,9 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 >
 > The *current* value of every parameter, and whether it is a default or an
 > operator value, is in `GET /v0/parameters`. While in AUTO, the behaviour tree
-> also logs the four numeric parameters it reads with `GetParameter`
-> (`impeller_pwm`, `dose1_pwm`, `dose2_pwm`, `sample_pwm`) on every tick; parameters read
+> also logs the six numeric parameters it reads with `GetParameter`
+> (`impeller_pwm`, `dose1_pwm`, `dose2_pwm`, `sample_pwm`,
+> `heater_pad_setpoint_c`, `compensation_temp_c`) on every tick; parameters read
 > with `GetParameterBool` or `GetParameterInt64` are not logged:
 >
 > ```
