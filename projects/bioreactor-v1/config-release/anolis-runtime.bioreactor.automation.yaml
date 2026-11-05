@@ -175,6 +175,28 @@ automation:
       default: 5
       min: 1
       max: 3600
+    # The heater (rlht0), in a loop closed on the pad thermocouple: the
+    # behavior tree holds the pad at heater_pad_setpoint_c while
+    # heater_enable is on, and turns the heater off while it is off. The
+    # liquid settles well below the pad (about 21 C below, stirred, on the
+    # reference vessel), so pick the pad setpoint from the liquid's reading
+    # (docs/runbook.md, "Heater"). 0 is off. The cap stays under
+    # scripts/heater_guard.py's default pad limit of 70 C.
+    - name: heater_enable
+      type: bool
+      default: false
+    - name: heater_pad_setpoint_c
+      type: double
+      default: 0.0
+      min: 0.0
+      max: 65.0
+    # The temperature the pH and DO probes compensate for: the culture's.
+    # Sent on entering AUTO and whenever it changes.
+    - name: compensation_temp_c
+      type: double
+      default: 25.0
+      min: 0.0
+      max: 100.0
     - name: command_keepalive_s
       type: int64
       default: 30
@@ -190,9 +212,9 @@ automation:
       - from: AUTO
         to: MANUAL
         # Stops the motors the behavior tree drives (dcmt0, dcmt1). The heater
-        # (rlht0) is left alone: automation never drives it, so leaving AUTO has
-        # nothing of automation's to undo, and cutting heat on a routine hand-off
-        # would cool the culture. It holds in MANUAL, under operator control.
+        # (rlht0) is left as the tree last set it: cutting heat on a routine
+        # hand-off would cool the culture. It holds in MANUAL, under operator
+        # control, and MANUAL -> IDLE turns it off.
         fail_on_error: true
         calls:
           - device_handle: bread0/dcmt0
@@ -257,8 +279,9 @@ automation:
       - from: "*"
         to: FAULT
         # FAULT is fail-safe: best-effort output writes, never block FAULT entry.
-        # Stops the motors. The heater is left alone: FAULT still allows control
-        # calls, so the operator can turn it off from here.
+        # Stops the motors and turns the heater off, with the same three rlht0
+        # calls as safety.safe_state below: a culture survives a cooling vessel
+        # better than a heater nobody is supervising.
         fail_on_error: false
         calls:
           - device_handle: bread0/dcmt0
@@ -279,6 +302,20 @@ automation:
             args:
               motor1_pwm: 0
               motor2_pwm: 0
+          - device_handle: bread0/rlht0
+            function_name: set_setpoints
+            args:
+              setpoint1_c: 0.0
+              setpoint2_c: 0.0
+          - device_handle: bread0/rlht0
+            function_name: set_mode
+            args:
+              mode: open_loop
+          - device_handle: bread0/rlht0
+            function_name: set_open_duty_pct
+            args:
+              duty1_pct: 0
+              duty2_pct: 0
 
 # Software safe-state for POST /v0/estop (anolis#219).
 #
