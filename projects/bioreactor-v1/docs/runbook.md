@@ -170,6 +170,98 @@ over, and calibrate straight after.
 **Finish.** Return the mode to where it was: IDLE, or AUTO to resume the
 automation.
 
+## Heater (rlht0)
+
+rlht0 drives the heater pads through relay 1 (gen1 boards have one relay) and
+reads two thermocouples: TC1 in the liquid (`t1_c`) and TC2 on the pad surface
+(`t2_c`). Nothing in the runtime or the gen1 firmware limits temperature
+beyond the loop's own setpoint (feastorg/Slice_RLHT#49). For an unattended
+run, start `scripts/heater_guard.py` first; it is described at the end of this
+section.
+
+**Power.** Two 12 V / 20 W pads on an 8 L fill, measured on the reference rig
+in November 2026:
+
+| Wiring at 12 V | Current | Power | Result |
+| --- | --- | --- | --- |
+| Series | about 0.77 A | about 9 W | Liquid rose about 3 °C in 8 h, from room: too little to hold a culture temperature |
+| Parallel | about 3 A | about 34 W | Liquid to about 41 °C at a 62 °C pad, stirred and aerated |
+
+The supply must deliver the parallel current on top of the rest of the bus. An
+undersized supply showed up as 2.6 A instead of 3 A.
+
+**Control.** Close the loop on the pad, not the liquid. The pad setpoint
+then caps the pad temperature, and an open pad thermocouple stops the heater.
+In MANUAL, on rlht0, make these calls, filling every argument **by name**:
+Operate lists arguments alphabetically (anolis-workbench#807), so entering
+them in order puts values in the wrong boxes.
+
+1. `set_periods_ms`: `period1_ms` 10000, `period2_ms` 10000. A 10 s window
+   saves relay wear, and the liquid's response is hours, not seconds.
+2. `set_tc_select`: `tc1_index` 2, `tc2_index` 1. `tc1_index` picks the
+   thermocouple that **channel 1's** loop follows, so 2 means the pad. Channel
+   2 has no relay on gen1. Don't send 2 / 2: firmware may come to refuse two
+   channels on one thermocouple (feastorg/Slice_RLHT#52).
+3. `set_pid_x10`: `kp1_x10` 255, `ki1_x10` 10, `kd1_x10` 0, and 0 for all
+   three channel 2 gains.
+4. `set_mode`: `closed_loop`.
+5. `set_setpoints`: `setpoint1_c` = the pad setpoint, `setpoint2_c` 0.
+
+**After any power loss to the slices, send all five again.** That covers a
+hardware e-stop, a supply change, or the Pi losing power. The slice keeps them
+in RAM only, and boots with defaults: period 1000 ms, gains 1 / 0 / 0, each
+channel on its own thermocouple. Until the provider re-applies them
+(anolis-provider-bread#220), check them by reading back `period1_ms` and
+`mode`, and confirm the relay comes on. `set_tc_select` and the gains have no
+readback yet (anolis-provider-bread#222). If the Pi boots before the slices
+answer, rlht0 isn't registered at all: restart the runtime once the slices
+are powered (anolis-provider-bread#168).
+
+**Choosing the pad setpoint.** With the impeller running, the liquid settles
+about 21 °C below the pad: a 62 °C pad gave about 41 °C liquid. For 37 °C
+liquid, start near 58 °C and adjust from a reference thermometer. On 8 L it
+takes several hours to settle. Keep the impeller on: unstirred, the vessel
+stratifies by about 2 °C top to bottom, and the pad runs hotter for the same
+heat delivered.
+
+**Reading the liquid temperature.** On the reworked gen1 board, `t1_c` reads
+about 1.2 °C high, measured between +0.9 and +1.5 °C against a mercury
+thermometer under heater load. On an unreworked gen1 board it reads 2.5 °C
+high or more, and higher still while the relay is on: the MAX6675's cold
+junction is measured on a board warmer than the thermocouple terminals
+(feastorg/Slice_RLHT#86). Check `t1_c` against a reference thermometer before
+relying on it.
+
+**Firmware.** Current Slice_RLHT firmware adds over-temperature, no-rise and
+sensor faults. Its no-rise check needs about 1 °C/min at 90 % output or more,
+and trips on this vessel in every configuration above
+(feastorg/Slice_RLHT#88). Anolis can't read or clear those faults yet
+(anolis-provider-bread#217). Don't update this rig's RLHT firmware until both
+are resolved.
+
+**The guard.** `scripts/heater_guard.py` polls rlht0 every 30 s and appends a
+CSV row. It sends the software e-stop, whose safe-state hooks turn the heater
+off, and confirms the latch, when:
+
+- the pad goes over `--pad-max` (default 70 °C; use about setpoint + 15);
+- the liquid goes over `--liquid-max` (default 45 °C);
+- there is no good reading for 120 s;
+- the pad reads below the liquid for 30 min, meaning its thermocouple is off
+  the pad.
+
+Run it under the runtime's environment, so it outlives your shell:
+
+```bash
+sudo systemd-run --unit=heater-guard \
+  --property=EnvironmentFile=/etc/anolis/runtime.env \
+  /usr/bin/python3 -u scripts/heater_guard.py ~/heater-run.csv --pad-max 70
+# stop it after the run:
+sudo systemctl stop heater-guard
+```
+
+It also stops when the slices lose power for 2 minutes: an e-stop, a supply
+change, or rework. Restart it after.
+
 ## Automation parameter reference
 
 All parameters are runtime-tunable over HTTP (`POST /v0/parameters` on the
