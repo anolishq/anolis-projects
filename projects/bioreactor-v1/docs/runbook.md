@@ -199,9 +199,8 @@ then caps the pad temperature, and an open pad thermocouple stops the heater.
 In AUTO the behavior tree does this. On the operator panel, set the
 **Heater** group's pad setpoint and turn it on. While it is on, the tree sends
 the five settings below on entering AUTO, whenever the setpoint changes, and
-again every `command_keepalive_s` (30 s), so a slice that lost power is set up
-again within about 30 s. While it is off, the tree turns the heater off. The
-heater's mode-transition behaviour:
+again every `command_keepalive_s` (30 s). While it is off, the tree turns the
+heater off. The heater's mode-transition behaviour:
 
 - AUTO → MANUAL leaves the heater as the tree last set it, so a routine
   hand-off doesn't cool the culture;
@@ -209,9 +208,21 @@ heater's mode-transition behaviour:
 - Stop on the operator panel turns the heater setting off, as it does the
   motors.
 
-After a hardware e-stop is released in AUTO, the heater comes back on with the
-motors. `validation/check_heater.py` checks the tree and these hooks against
-the mock providers.
+**After a hardware e-stop or any slice power loss in AUTO, go MANUAL → AUTO.**
+Nothing comes back on by itself. When the slices answer again, the runtime
+drives their safe state (heater and motors off) and refuses automation's calls
+to them until AUTO is entered again. Operate shows "came back after a loss.
+Automation won't drive them until you go MANUAL → AUTO", with a button to
+Mode. After three refused calls (about 60 s at the 30 s keepalive) the run
+goes to FAULT; the way back is then FAULT → MANUAL → AUTO. Either way, entering
+AUTO sends the five settings again, so nothing needs retyping. The loop starts
+from zero, so the relay builds up over several minutes. Measured on the
+reference rig on 2026-11-07: a 10 s e-stop (bus errors from 19:58:50), the
+first refused call at 19:59:05, FAULT at 20:00:05, AUTO at 20:00:26, and the
+pad rising again from 20:02.
+
+`validation/check_heater.py` checks the tree and these hooks against the mock
+providers.
 
 In MANUAL, nothing re-sends the settings. Make these calls on rlht0, filling
 every argument **by name**: Operate lists arguments alphabetically
