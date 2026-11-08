@@ -14,6 +14,13 @@ or thermocouple has gone wrong. This script polls the runtime every
   --detach-seconds after the relay has been on. A pad thermocouple that has
   come off the pad reads ambient, so the loop runs at full power blind.
 
+Each row is one instantaneous sample, not an average. relay1_on is the relay at
+that instant, so the rows give the duty only when the poll period is off a
+multiple of the relay period. At 30 s against a 10 s relay, every row lands at
+nearly the same point of the cycle, drifting only by the request time; the
+default 31 s steps through it. For the duty,
+use the runtime's telemetry, which records each relay change.
+
 After sending the e-stop it reads the latch back from /v0/runtime/status
 and retries until the latch is confirmed. The request can time out while
 the safe-state hooks wait on an unreachable device. It sends nothing else.
@@ -147,7 +154,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--stale", type=float, default=120.0, help="seconds without a good reading (default 120)")
     p.add_argument("--detach-delta", type=float, default=3.0, help="pad below liquid by this much, C (default 3)")
     p.add_argument("--detach-seconds", type=float, default=1800.0, help="for this long (default 1800)")
-    p.add_argument("--period", type=float, default=30.0, help="poll period, s (default 30)")
+    p.add_argument(
+        "--period",
+        type=float,
+        default=31.0,
+        help="poll period, s (default 31; keep it off a multiple of the relay period, 10 s, or every row samples the same point of the relay cycle)",
+    )
     return p.parse_args(argv)
 
 

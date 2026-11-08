@@ -299,8 +299,14 @@ and trips on this vessel in every configuration above
 (anolis-provider-bread#217). Don't update this rig's RLHT firmware until both
 are resolved.
 
-**The guard.** `scripts/heater_guard.py` polls rlht0 every 30 s and appends a
-CSV row. It sends the software e-stop, whose safe-state hooks turn the heater
+**The guard.** `scripts/heater_guard.py` polls rlht0 every 31 s and appends a
+CSV row. A row is one instant, not an average. The 31 s steps through the
+relay's 10 s cycle. At 30 s every row caught the relay at nearly the same
+point, drifting only by each request's few milliseconds: on
+the reference rig on 2026-11-07, the guard read it on in nearly every row from
+05:00 while the duty was 54–57 %. Take the duty from the telemetry.
+
+The guard sends the software e-stop, whose safe-state hooks turn the heater
 off, and confirms the latch, when:
 
 - the pad goes over `--pad-max` (default 70 °C; use about setpoint + 15);
