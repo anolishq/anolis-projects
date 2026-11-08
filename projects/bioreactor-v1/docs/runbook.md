@@ -250,12 +250,39 @@ readback yet (anolis-provider-bread#222). If the Pi boots before the slices
 answer, rlht0 isn't registered at all: restart the runtime once the slices
 are powered (anolis-provider-bread#168).
 
-**Choosing the pad setpoint.** With the impeller running, the liquid settles
-about 21 °C below the pad: a 62 °C pad gave about 41 °C liquid. For 37 °C
-liquid, start near 58 °C and adjust from a reference thermometer. On 8 L it
-takes several hours to settle. Keep the impeller on: unstirred, the vessel
-stratifies by about 2 °C top to bottom, and the pad runs hotter for the same
-heat delivered.
+**Choosing the pad setpoint.** At steady state the heat the pad puts through
+the glass is the heat the vessel loses to the room, so the gap between pad and
+liquid grows with how far the liquid is above room temperature:
+
+    pad ≈ target + k × (target − room)
+
+Two overnight runs on the reference rig (8 L, stirred) measured k between
+about 1.0 and 1.65:
+
+| Run | Pad | Liquid, steady (mercury) | k, if the room was 20–23.5 °C |
+| --- | --- | --- | --- |
+| 2026-11-04 | 62 °C | about 41 °C | 1.0–1.2 |
+| 2026-11-07 | 46 °C | 32.0 °C | 1.2–1.65 |
+
+The room temperature was not recorded in either run, and that is most of the
+spread. The runs also differed in impeller speed (80 and 100), aeration, and
+lights, which add heat. So:
+
+1. Read the room temperature, and start at `target + 1.3 × (target − room)`.
+   In a 22 °C room that is about 29 °C for a 25 °C liquid, 40 °C for 30 °C,
+   and 57 °C for 37 °C.
+2. Let it settle. On 8 L that takes 10–14 hours; it was still rising about
+   0.05 °C/h at 14 hours.
+3. Read the liquid with a reference thermometer. Correct the pad by about
+   2.3 × the liquid's error (1 + k), for example 2–3 °C of pad for each 1 °C
+   the liquid is low.
+
+The heater can't cool, so a target at or below room temperature can't be
+held. Close to room temperature the relay barely runs, and the liquid follows
+the room's day-to-night swing. Run the heater with the impeller, aeration and
+lights set as they will be for the culture. Keep the impeller on: unstirred,
+the vessel stratifies by about 2 °C top to bottom, and the pad runs hotter for
+the same heat delivered.
 
 **Reading the liquid temperature.** On the reworked gen1 board, `t1_c` reads
 about 1.2 °C high, measured between +0.9 and +1.5 °C against a mercury
