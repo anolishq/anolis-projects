@@ -177,9 +177,10 @@ automation:
     # The heater (rlht0), in a loop closed on the pad thermocouple: the
     # behavior tree holds the pad at heater_pad_setpoint_c while
     # heater_enable is on, and turns the heater off while it is off. The
-    # liquid settles well below the pad (about 21 C below, stirred, on the
-    # reference vessel), so pick the pad setpoint from the liquid's reading
-    # (docs/runbook.md, "Heater"). 0 is off. The cap stays under
+    # liquid settles below the pad, by a gap that grows with how far it is
+    # above room temperature: pick the pad setpoint from the room and target
+    # temperatures, then correct it from a reference thermometer
+    # (docs/runbook.md, "Choosing the pad setpoint"). 0 is off. The cap stays under
     # scripts/heater_guard.py's default pad limit of 70 C.
     - name: heater_enable
       type: bool

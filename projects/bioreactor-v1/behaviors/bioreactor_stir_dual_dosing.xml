@@ -173,8 +173,10 @@
         rlht0: the heater pads on relay 1, in a loop closed on the pad
         thermocouple (TC2), so heater_pad_setpoint_c caps the pad temperature.
         The slice keeps its settings in RAM only and boots with defaults, so
-        every emit, including the keepalive, sends all five: a slice that lost
-        power is set up again within command_keepalive_s. Sending the same
+        every emit, including the keepalive, sends all five. A slice that lost
+        power is not set up again by the keepalive: the runtime refuses
+        automation calls to a device that came back until AUTO is entered
+        again, and entering AUTO sends all five (first emit). Sending the same
         values again changes nothing on the slice: Slice_RLHT applies a mode
         or gains only when they differ from what it holds.
 

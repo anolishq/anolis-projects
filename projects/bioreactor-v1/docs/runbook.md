@@ -199,9 +199,8 @@ then caps the pad temperature, and an open pad thermocouple stops the heater.
 In AUTO the behavior tree does this. On the operator panel, set the
 **Heater** group's pad setpoint and turn it on. While it is on, the tree sends
 the five settings below on entering AUTO, whenever the setpoint changes, and
-again every `command_keepalive_s` (30 s), so a slice that lost power is set up
-again within about 30 s. While it is off, the tree turns the heater off. The
-heater's mode-transition behaviour:
+again every `command_keepalive_s` (30 s). While it is off, the tree turns the
+heater off. The heater's mode-transition behaviour:
 
 - AUTO → MANUAL leaves the heater as the tree last set it, so a routine
   hand-off doesn't cool the culture;
@@ -209,9 +208,21 @@ heater's mode-transition behaviour:
 - Stop on the operator panel turns the heater setting off, as it does the
   motors.
 
-After a hardware e-stop is released in AUTO, the heater comes back on with the
-motors. `validation/check_heater.py` checks the tree and these hooks against
-the mock providers.
+**After a hardware e-stop or any slice power loss in AUTO, go MANUAL → AUTO.**
+Nothing comes back on by itself. When the slices answer again, the runtime
+drives their safe state (heater and motors off) and refuses automation's calls
+to them until AUTO is entered again. Operate shows "came back after a loss.
+Automation won't drive them until you go MANUAL → AUTO", with a button to
+Mode. After three refused calls (about 60 s at the 30 s keepalive) the run
+goes to FAULT; the way back is then FAULT → MANUAL → AUTO. Either way, entering
+AUTO sends the five settings again, so nothing needs retyping. The loop starts
+from zero, so the relay builds up over several minutes. Measured on the
+reference rig on 2026-11-07: a 10 s e-stop (bus errors from 19:58:50), the
+first refused call at 19:59:05, FAULT at 20:00:05, AUTO at 20:00:26, and the
+pad rising again from 20:02.
+
+`validation/check_heater.py` checks the tree and these hooks against the mock
+providers.
 
 In MANUAL, nothing re-sends the settings. Make these calls on rlht0, filling
 every argument **by name**: Operate lists arguments alphabetically
@@ -239,12 +250,39 @@ readback yet (anolis-provider-bread#222). If the Pi boots before the slices
 answer, rlht0 isn't registered at all: restart the runtime once the slices
 are powered (anolis-provider-bread#168).
 
-**Choosing the pad setpoint.** With the impeller running, the liquid settles
-about 21 °C below the pad: a 62 °C pad gave about 41 °C liquid. For 37 °C
-liquid, start near 58 °C and adjust from a reference thermometer. On 8 L it
-takes several hours to settle. Keep the impeller on: unstirred, the vessel
-stratifies by about 2 °C top to bottom, and the pad runs hotter for the same
-heat delivered.
+**Choosing the pad setpoint.** At steady state the heat the pad puts through
+the glass is the heat the vessel loses to the room, so the gap between pad and
+liquid grows with how far the liquid is above room temperature:
+
+    pad ≈ target + k × (target − room)
+
+Two overnight runs on the reference rig (8 L, stirred) measured k between
+about 1.0 and 1.65:
+
+| Run | Pad | Liquid, steady (mercury) | k, if the room was 20–23.5 °C |
+| --- | --- | --- | --- |
+| 2026-11-04 | 62 °C | about 41 °C | 1.0–1.2 |
+| 2026-11-07 | 46 °C | 32.0 °C | 1.2–1.65 |
+
+The room temperature was not recorded in either run, and that is most of the
+spread. The runs also differed in impeller speed (80 and 100), aeration, and
+lights, which add heat. So:
+
+1. Read the room temperature, and start at `target + 1.3 × (target − room)`.
+   In a 22 °C room that is about 29 °C for a 25 °C liquid, 40 °C for 30 °C,
+   and 57 °C for 37 °C.
+2. Let it settle. On 8 L that takes 10–14 hours; it was still rising about
+   0.05 °C/h at 14 hours.
+3. Read the liquid with a reference thermometer. Correct the pad by about
+   2.3 × the liquid's error (1 + k), for example 2–3 °C of pad for each 1 °C
+   the liquid is low.
+
+The heater can't cool, so a target at or below room temperature can't be
+held. Close to room temperature the relay barely runs, and the liquid follows
+the room's day-to-night swing. Run the heater with the impeller, aeration and
+lights set as they will be for the culture. Keep the impeller on: unstirred,
+the vessel stratifies by about 2 °C top to bottom, and the pad runs hotter for
+the same heat delivered.
 
 **Reading the liquid temperature.** On the reworked gen1 board, `t1_c` reads
 about 1.2 °C high, measured between +0.9 and +1.5 °C against a mercury
@@ -261,8 +299,14 @@ and trips on this vessel in every configuration above
 (anolis-provider-bread#217). Don't update this rig's RLHT firmware until both
 are resolved.
 
-**The guard.** `scripts/heater_guard.py` polls rlht0 every 30 s and appends a
-CSV row. It sends the software e-stop, whose safe-state hooks turn the heater
+**The guard.** `scripts/heater_guard.py` polls rlht0 every 31 s and appends a
+CSV row. A row is one instant, not an average. The 31 s steps through the
+relay's 10 s cycle. At 30 s every row caught the relay at nearly the same
+point, drifting only by each request's few milliseconds: on
+the reference rig on 2026-11-07, the guard read it on in nearly every row from
+05:00 while the duty was 54–57 %. Take the duty from the telemetry.
+
+The guard sends the software e-stop, whose safe-state hooks turn the heater
 off, and confirms the latch, when:
 
 - the pad goes over `--pad-max` (default 70 °C; use about setpoint + 15);
