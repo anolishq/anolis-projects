@@ -9,12 +9,15 @@
 | bread0 | dcmt1  | DCMT (dose1 ch1, dose2 ch2)          | 0x15        |
 | ezo0   | ph0    | Atlas EZO-pH                         | 0x63        |
 | ezo0   | do0    | Atlas EZO-DO                         | 0x61        |
+| adafruit0 | room0 | BME280 room air (temperature, pressure, humidity), beside the vessel | 0x76 |
 
 - **Bus**: Raspberry Pi `/dev/i2c-1`, at 50 kHz with the core clock pinned. Run
   `host/prep-raspberrypi-os.sh` once on a new Pi (and reboot if it says so) before
   launching anything; `--check` reports without changing.
 - **bread0**: CRUMBS controller — bread provider on I²C bus
 - **ezo0**: EZO shield in I²C mode — ezo provider on the same bus
+- **adafruit0**: a BME280 breakout on the same bus — anolis-provider-adafruit
+  (0.2.0 or later; 0.1.0 does not load the BME280 on a Raspberry Pi)
 
 ## Repository layout (sibling checkout)
 
