@@ -224,10 +224,11 @@ pad rising again from 20:02.
 `validation/check_heater.py` checks the tree and these hooks against the mock
 providers.
 
-In MANUAL, nothing re-sends the settings. Make these calls on rlht0, filling
-every argument **by name**: Operate lists arguments alphabetically
-(anolis-workbench#807), so entering them in order puts values in the wrong
-boxes.
+In MANUAL, nothing re-sends the settings. Make these calls on rlht0. Operate
+lists each function's arguments in the order below, as the provider declares
+them (anolis 0.11.0 with anolis-workbench 0.33.3 or later). Earlier releases
+sorted them alphabetically (anolis#731, anolis-workbench#807), so check each
+box's label before sending.
 
 1. `set_periods_ms`: `period1_ms` 10000, `period2_ms` 10000. A 10 s window
    saves relay wear, and the liquid's response is hours, not seconds.
