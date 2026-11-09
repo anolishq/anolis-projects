@@ -197,7 +197,7 @@
           <CheckBool value="{heater_enable}" expected="true"/>
           <BuildArgsJson arg1_name="period1_ms" arg1_type="int64" arg1_num="10000" arg2_name="period2_ms" arg2_type="int64" arg2_num="10000" json="{rlht0_periods_args}"/>
           <CallDevice device_handle="bread0/rlht0" function_name="set_periods_ms" args="{rlht0_periods_args}" reason="{rlht0_emit_reason}"/>
-          <BuildArgsJson arg1_name="tc1_index" arg1_type="int64" arg1_num="2" arg2_name="tc2_index" arg2_type="int64" arg2_num="1" json="{rlht0_tc_args}"/>
+          <BuildArgsJson arg1_name="channel1_thermocouple" arg1_type="int64" arg1_num="2" arg2_name="channel2_thermocouple" arg2_type="int64" arg2_num="1" json="{rlht0_tc_args}"/>
           <CallDevice device_handle="bread0/rlht0" function_name="set_tc_select" args="{rlht0_tc_args}" reason="{rlht0_emit_reason}"/>
           <BuildArgsJson arg1_name="kp1_x10" arg1_type="int64" arg1_num="255" arg2_name="ki1_x10" arg2_type="int64" arg2_num="10" arg3_name="kd1_x10" arg3_type="int64" arg3_num="0" arg4_name="kp2_x10" arg4_type="int64" arg4_num="0" arg5_name="ki2_x10" arg5_type="int64" arg5_num="0" arg6_name="kd2_x10" arg6_type="int64" arg6_num="0" json="{rlht0_pid_args}"/>
           <CallDevice device_handle="bread0/rlht0" function_name="set_pid_x10" args="{rlht0_pid_args}" reason="{rlht0_emit_reason}"/>

@@ -231,10 +231,14 @@ boxes.
 
 1. `set_periods_ms`: `period1_ms` 10000, `period2_ms` 10000. A 10 s window
    saves relay wear, and the liquid's response is hours, not seconds.
-2. `set_tc_select`: `tc1_index` 2, `tc2_index` 1. `tc1_index` picks the
-   thermocouple that **channel 1's** loop follows, so 2 means the pad. Channel
-   2 has no relay on gen1. Don't send 2 / 2: firmware may come to refuse two
-   channels on one thermocouple (feastorg/Slice_RLHT#52).
+2. `set_tc_select`: `channel1_thermocouple` 2, `channel2_thermocouple` 1.
+   `channel1_thermocouple` picks the thermocouple that channel 1's loop
+   follows, so 2 means the pad. Channel 2 has no relay on gen1. Don't send
+   2 / 2: firmware may come to refuse two channels on one thermocouple
+   (feastorg/Slice_RLHT#52). Current Slice_RLHT firmware also refuses a
+   different selection while that channel's loop runs with a setpoint, which
+   is why this step comes before 4 and 5; resending the selection in force is
+   accepted.
 3. `set_pid_x10`: `kp1_x10` 255, `ki1_x10` 10, `kd1_x10` 0, and 0 for all
    three channel 2 gains.
 4. `set_mode`: `closed_loop`.
@@ -245,8 +249,9 @@ covers a hardware e-stop, a supply change, or the Pi losing power. The slice
 keeps them in RAM only, and boots with defaults: period 1000 ms, gains
 1 / 0 / 0, each channel on its own thermocouple. Until the provider re-applies
 them (anolis-provider-bread#220), check them by reading back `period1_ms` and
-`mode`, and confirm the relay comes on. `set_tc_select` and the gains have no
-readback yet (anolis-provider-bread#222). If the Pi boots before the slices
+`mode`, and `channel1_thermocouple`, which should read 2, and confirm the
+relay comes on (`on1_ms` above 0). The gains have no readback. If the Pi
+boots before the slices
 answer, rlht0 isn't registered at all: restart the runtime once the slices
 are powered (anolis-provider-bread#168).
 
