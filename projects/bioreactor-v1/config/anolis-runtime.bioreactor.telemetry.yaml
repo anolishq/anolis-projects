@@ -41,6 +41,21 @@ providers:
       backoff_ms: [200, 500, 1000]
       timeout_ms: 30000
 
+  - id: adafruit0
+    # Frozen Python provider: install.sh puts it in <prefix>/bin, and it has no
+    # CMake build directory for the ../anolis-provider-*/build/... form the
+    # other providers use. A run from a checkout needs it installed there.
+    command: /opt/anolis/bin/anolis-provider-adafruit
+    args: ["--config", "../anolis-projects/projects/bioreactor-v1/config/provider-adafruit.bioreactor.yaml"]
+    timeout_ms: 5000
+    hello_timeout_ms: 5000
+    ready_timeout_ms: 10000
+    restart_policy:
+      enabled: true
+      max_attempts: 3
+      backoff_ms: [200, 500, 1000]
+      timeout_ms: 30000
+
 polling:
   interval_ms: 2500
 
