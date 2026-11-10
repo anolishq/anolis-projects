@@ -15,6 +15,9 @@ providers:
   ezo0:
     config: config/provider-ezo.bioreactor.yaml
     notes: "EZO sensors: ph0 (0x63), do0 (0x61)"
+  adafruit0:
+    config: config/provider-adafruit.bioreactor.yaml
+    notes: "Room-air BME280: room0 (0x76), on the same I2C bus"
 
 behaviors:
   - behaviors/bioreactor_stir_dual_dosing.xml
@@ -32,6 +35,9 @@ compatibility:
     ezo0:
       strategy: pinned-ref
       version: "see components"
+    adafruit0:
+      strategy: pinned-ref
+      version: "see components"
 
 safety:
   estop_topology: power_cut
@@ -47,6 +53,10 @@ operator:
     # TC1 is in the liquid; TC2 is on the heater pad surface.
     - { signal: bread0/rlht0/t1_c, label: Temperature, unit: "°C", decimals: 1 }
     - { signal: bread0/rlht0/t2_c, label: Heater surface, unit: "°C", decimals: 1 }
+    # The room the vessel loses heat to, and the air pressure DO compensates for.
+    - { signal: adafruit0/room0/temperature, label: Room air, unit: "°C", decimals: 1 }
+    - { signal: adafruit0/room0/pressure, label: Air pressure, unit: hPa, decimals: 1 }
+    - { signal: adafruit0/room0/relative_humidity, label: Room humidity, unit: "%", decimals: 0 }
   settings:
     - group: Stirring
       items:
@@ -131,7 +141,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.10.2"
+    version: "0.12.0"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
@@ -139,6 +149,9 @@ components:
     ezo:
       repo: anolishq/anolis-provider-ezo
       version: "0.6.0"
+    adafruit:
+      repo: anolishq/anolis-provider-adafruit
+      version: "0.2.0"
   optional:
     telemetry_export:
       package: anolis-telemetry-export

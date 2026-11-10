@@ -9,12 +9,15 @@
 | bread0 | dcmt1  | DCMT (dose1 ch1, dose2 ch2)          | 0x15        |
 | ezo0   | ph0    | Atlas EZO-pH                         | 0x63        |
 | ezo0   | do0    | Atlas EZO-DO                         | 0x61        |
+| adafruit0 | room0 | BME280 room air (temperature, pressure, humidity), beside the vessel | 0x76 |
 
 - **Bus**: Raspberry Pi `/dev/i2c-1`, at 50 kHz with the core clock pinned. Run
   `host/prep-raspberrypi-os.sh` once on a new Pi (and reboot if it says so) before
   launching anything; `--check` reports without changing.
 - **bread0**: CRUMBS controller — bread provider on I²C bus
 - **ezo0**: EZO shield in I²C mode — ezo provider on the same bus
+- **adafruit0**: a BME280 breakout on the same bus — anolis-provider-adafruit
+  (0.2.0 or later; 0.1.0 does not load the BME280 on a Raspberry Pi)
 
 ## Repository layout (sibling checkout)
 
@@ -224,10 +227,11 @@ pad rising again from 20:02.
 `validation/check_heater.py` checks the tree and these hooks against the mock
 providers.
 
-In MANUAL, nothing re-sends the settings. Make these calls on rlht0, filling
-every argument **by name**: Operate lists arguments alphabetically
-(anolis-workbench#807), so entering them in order puts values in the wrong
-boxes.
+In MANUAL, nothing re-sends the settings. Make these calls on rlht0. Operate
+lists each function's arguments in the order below, as the provider declares
+them (anolis 0.11.0 with anolis-workbench 0.33.3 or later). Earlier releases
+sorted them alphabetically (anolis#731, anolis-workbench#807), so check each
+box's label before sending.
 
 1. `set_periods_ms`: `period1_ms` 10000, `period2_ms` 10000. A 10 s window
    saves relay wear, and the liquid's response is hours, not seconds.
@@ -261,33 +265,35 @@ liquid grows with how far the liquid is above room temperature:
 
     pad ≈ target + k × (target − room)
 
-Two overnight runs on the reference rig (8 L, stirred) measured k between
-about 1.0 and 1.65:
+Three overnight runs on the reference rig (8 L, stirred) put k at about 1.1:
 
-| Run | Pad | Liquid, steady (mercury) | k, if the room was 20–23.5 °C |
-| --- | --- | --- | --- |
-| 2026-11-04 | 62 °C | about 41 °C | 1.0–1.2 |
-| 2026-11-07 | 46 °C | 32.0 °C | 1.2–1.65 |
+| Run | Pad | Liquid, steady (mercury) | Room | k |
+| --- | --- | --- | --- | --- |
+| 2026-11-04, daytime | 62 °C | about 41 °C | not recorded, about 22 °C | about 1.1 |
+| 2026-11-07, overnight | 46 °C | 32.0 °C | not recorded | about 1.2 at 20.3 °C |
+| 2026-11-08, overnight | 30 °C | 25.0 °C | 20.2–20.5 °C, measured | 1.04–1.11 |
 
-The room temperature was not recorded in either run, and that is most of the
-spread. The runs also differed in impeller speed (80 and 100), aeration, and
+Only the 2026-11-08 run recorded the room. The two earlier k values assume a
+room like that night's, or the 2026-11-04 daytime value of about 22 °C. The runs
+also differed in impeller speed (80 on 2026-11-04, 100 after), aeration, and
 lights, which add heat. So:
 
-1. Read the room temperature, and start at `target + 1.3 × (target − room)`.
-   In a 22 °C room that is about 29 °C for a 25 °C liquid, 40 °C for 30 °C,
-   and 57 °C for 37 °C.
-2. Let it settle. On 8 L that takes 10–14 hours; it was still rising about
-   0.05 °C/h at 14 hours.
+1. Read the room temperature, and start at `target + 1.1 × (target − room)`.
+   In a 20.5 °C room that is 30 °C for a 25 °C liquid, about 40.5 °C for
+   30 °C, and about 55 °C for 37 °C. The 25 °C case is the one measured.
+2. Let it settle. On 8 L that takes 10–14 hours. Both overnight runs were
+   still rising about 0.03–0.05 °C/h after 12–14 hours.
 3. Read the liquid with a reference thermometer. Correct the pad by about
-   2.3 × the liquid's error (1 + k), for example 2–3 °C of pad for each 1 °C
-   the liquid is low.
+   (1 + k) × the liquid's error: about 2 °C of pad for each 1 °C the liquid
+   is low.
 
 The heater can't cool, so a target at or below room temperature can't be
-held. Close to room temperature the relay barely runs, and the liquid follows
-the room's day-to-night swing. Run the heater with the impeller, aeration and
-lights set as they will be for the culture. Keep the impeller on: unstirred,
-the vessel stratifies by about 2 °C top to bottom, and the pad runs hotter for
-the same heat delivered.
+held. Whatever the target, the liquid follows the room by about
+k / (1 + k), about 0.5 °C for each 1 °C the room moves. On 2026-11-08 the
+room moved 0.3 °C overnight, from 23:00 on. Run the heater with the impeller,
+aeration and lights set as they will be for the culture. Keep the impeller
+on: unstirred, the vessel stratifies by about 2 °C top to bottom, and the pad
+runs hotter for the same heat delivered.
 
 **Reading the liquid temperature.** On the reworked gen1 board, `t1_c` reads
 about 1.2 °C high, measured between +0.9 and +1.5 °C against a mercury

@@ -12,6 +12,7 @@ rather than built from source.
   /usr/local/bin/anolis-runtime
   /usr/local/bin/anolis-provider-bread
   /usr/local/bin/anolis-provider-ezo
+  /usr/local/bin/anolis-provider-adafruit
   ```
 - Runtime is launched **from the root of this repository**:
   ```bash
