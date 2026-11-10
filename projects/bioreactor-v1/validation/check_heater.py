@@ -11,16 +11,16 @@ mode, then:
    is the one that shows the tree turning it off;
 2. turns the heater on at a 58 C pad setpoint, and expects period 10000 ms,
    thermocouple select 2 / 1 and gains 255 / 10 / 0 sent before the loop is
-   closed at 58 C;
+   closed at 58 C, and rlht0 to read back channel 1 on thermocouple 2;
 3. moves the pad setpoint and the compensation temperature, and expects
    both followed;
 4. leaves AUTO for MANUAL, and expects the heater left as it was;
 5. turns the heater off in AUTO, and expects it off;
 6. turns it back on and enters FAULT, and expects the heater off.
 
-The mock RLHT reads back mode, setpoints and relay state but not period,
-thermocouple select or gains, and the compensation signals are not polled,
-so those are read from the runtime's call log. The log skips a tree call
+The mock RLHT reads back mode, setpoints, relay state and thermocouple
+select (anolis-provider-bread with #224), but not period or gains, so those
+and the compensation calls are read from the runtime's call log. The log skips a tree call
 identical to the last, so the keepalive is not checked here.
 Needs an anolis-runtime built with automation, and PyYAML.
 
@@ -110,7 +110,9 @@ class Api:
         out = {}
         for value in self.get("/v0/state/bread0/rlht0").get("values", []):
             v = value.get("value") or {}
-            out[value["signal_id"]] = next(iter(v.values()), None) if v else None
+            raw = v.get(v.get("type", ""))
+            # int64 and uint64 arrive as JSON strings.
+            out[value["signal_id"]] = int(raw) if v.get("type") in ("int64", "uint64") and raw is not None else raw
         return out
 
 
@@ -217,11 +219,18 @@ def main() -> int:
                 "on: period, thermocouple 2 / 1 and gains are sent before the loop closes",
                 logged(log, seen, [
                     r"bread0/rlht0 set_periods_ms\(period1_ms=10000, period2_ms=10000\) .*: OK",
-                    r"bread0/rlht0 set_tc_select\(tc1_index=2, tc2_index=1\) .*: OK",
+                    r"bread0/rlht0 set_tc_select\(channel1_thermocouple=2, channel2_thermocouple=1\) .*: OK",
                     r"bread0/rlht0 set_pid_x10\(kd1_x10=0, kd2_x10=0, ki1_x10=10, ki2_x10=0, kp1_x10=255, kp2_x10=0\) .*: OK",
                     r'bread0/rlht0 set_mode\(mode="closed_loop"\) .*: OK',
                     r"bread0/rlht0 set_setpoints\(setpoint1_c=58(\.0+)?, setpoint2_c=0(\.0+)?\) .*: OK",
                 ]),
+                15,
+            )
+
+            ok &= eventually(
+                "on: rlht0 reads back channel 1 on thermocouple 2 and channel 2 on 1",
+                lambda: (lambda s: True if (s.get("channel1_thermocouple"), s.get("channel2_thermocouple")) == (2, 1)
+                         else {k: s.get(k) for k in ("channel1_thermocouple", "channel2_thermocouple")})(api.rlht()),
                 15,
             )
 
