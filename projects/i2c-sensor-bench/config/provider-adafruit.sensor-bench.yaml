@@ -1,0 +1,17 @@
+# anolis-provider-adafruit: the boards on the bench's I2C bus, at their default
+# addresses. Add a board here when it goes on the bus, and give it an address
+# no other board on the bus uses.
+i2c_bus: 1
+devices:
+  - id: rh0
+    type: sht3x
+    label: SHT31-D temperature and humidity
+  - id: baro0
+    type: lps22
+    label: LPS22 pressure
+  - id: baro1
+    type: bmp3xx
+    label: BMP390 pressure
+  - id: imu0
+    type: mpu6050
+    label: MPU-6050 motion
