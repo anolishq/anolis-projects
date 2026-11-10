@@ -21,6 +21,24 @@ compatibility:
       strategy: pinned-ref
       version: "see components"
 
+# The workbench's operator panel: one reading and sparkline per signal.
+# Presentation only: the runtime does not read it.
+operator:
+  readings:
+    - { signal: adafruit0/rh0/temperature, label: SHT31 temperature, unit: "°C", decimals: 2 }
+    - { signal: adafruit0/rh0/relative_humidity, label: SHT31 humidity, unit: "%", decimals: 1 }
+    - { signal: adafruit0/baro0/pressure, label: LPS22 pressure, unit: hPa, decimals: 2 }
+    - { signal: adafruit0/baro0/temperature, label: LPS22 temperature, unit: "°C", decimals: 2 }
+    - { signal: adafruit0/baro1/pressure, label: BMP390 pressure, unit: hPa, decimals: 2 }
+    - { signal: adafruit0/baro1/temperature, label: BMP390 temperature, unit: "°C", decimals: 2 }
+    - { signal: adafruit0/imu0/acceleration_x, label: MPU-6050 acceleration X, unit: "m/s²", decimals: 2 }
+    - { signal: adafruit0/imu0/acceleration_y, label: MPU-6050 acceleration Y, unit: "m/s²", decimals: 2 }
+    - { signal: adafruit0/imu0/acceleration_z, label: MPU-6050 acceleration Z, unit: "m/s²", decimals: 2 }
+    - { signal: adafruit0/imu0/gyro_x, label: MPU-6050 gyro X, unit: rad/s, decimals: 3 }
+    - { signal: adafruit0/imu0/gyro_y, label: MPU-6050 gyro Y, unit: rad/s, decimals: 3 }
+    - { signal: adafruit0/imu0/gyro_z, label: MPU-6050 gyro Z, unit: rad/s, decimals: 3 }
+    - { signal: adafruit0/imu0/temperature, label: MPU-6050 die temperature, unit: "°C", decimals: 1 }
+
 components:
   runtime:
     repo: anolishq/anolis
