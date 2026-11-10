@@ -23,6 +23,13 @@ i2cdetect -y 1
 
 Every address in the table should appear.
 
+The provider runs as the `anolis` service user, which needs the bus. `install.sh` stops if it does not have it:
+
+```bash
+id anolis || sudo useradd --system --shell /usr/sbin/nologin --home-dir /opt/anolis anolis
+sudo usermod -aG i2c anolis
+```
+
 ## Install
 
 `install.sh` comes from the anolis release that `machine-profile.yaml` pins. From a clone of this repository:
