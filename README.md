@@ -10,6 +10,7 @@ Each subdirectory of `projects/` is an independent, self-contained application p
 | ---------------------------------------------------- | -------------------------------------------------------------------- | ------ |
 | [`projects/bioreactor-v1/`](projects/bioreactor-v1/) | Stirred bioreactor with dual dosing, temperature, pH, and DO sensing | Active |
 | [`projects/mixed-bus-dev/`](projects/mixed-bus-dev/) | `bread0` + `ezo0` shared-I2C development and validation profile      | Dev    |
+| [`projects/i2c-sensor-bench/`](projects/i2c-sensor-bench/) | Vendor I2C sensor breakouts on their own bus, for testing providers | Dev    |
 
 ## Conventions
 
