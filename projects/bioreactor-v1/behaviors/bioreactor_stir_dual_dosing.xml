@@ -176,7 +176,9 @@
         every emit, including the keepalive, sends all five. A slice that lost
         power is not set up again by the keepalive: the runtime refuses
         automation calls to a device that came back until AUTO is entered
-        again, and entering AUTO sends all five (first emit). Sending the same
+        again. The emit state survives re-entering AUTO, so the next keepalive
+        then sends all five: at once if the last send was command_keepalive_s
+        or more ago, otherwise when that has passed. Sending the same
         values again changes nothing on the slice: Slice_RLHT applies a mode
         or gains only when they differ from what it holds.
 
@@ -226,8 +228,10 @@
       </Fallback>
 
       <!--
-        pH and DO temperature compensation, set to compensation_temp_c on
-        entering AUTO and whenever it changes; no keepalive. The EZO provider
+        pH and DO temperature compensation, set to compensation_temp_c on the
+        first entry to AUTO after the runtime starts and whenever it changes.
+        The emit state survives re-entering AUTO and there is no keepalive, so
+        a later entry to AUTO does not send it. The EZO provider
         sends the values again itself when a probe loses power, and a call
         that kept failing would put the run in FAULT.
       -->

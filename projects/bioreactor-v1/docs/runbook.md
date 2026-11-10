@@ -153,9 +153,11 @@ when it kept one.
   give it a few minutes, then calibrate. `calibrate` runs at the default
   compensation (20 °C, salinity 0, 101.3 kPa), as the datasheet expects, then
   sends back the compensation set before (anolis-provider-ezo 0.6.0+).
-- Compensation: in AUTO the tree sets both probes to `compensation_temp_c` on
-  entering AUTO and whenever it changes, replacing any value set by hand in
-  MANUAL.
+- Compensation: the tree sets both probes to `compensation_temp_c` on the first
+  entry to AUTO after the runtime starts and whenever the value changes,
+  replacing any value set by hand in MANUAL. A later entry to AUTO does not send
+  it, so a value set by hand stays until `compensation_temp_c` changes or the
+  runtime restarts.
 
 **Check the result.**
 
@@ -201,8 +203,10 @@ then caps the pad temperature, and an open pad thermocouple stops the heater.
 
 In AUTO the behavior tree does this. On the operator panel, set the
 **Heater** group's pad setpoint and turn it on. While it is on, the tree sends
-the five settings below on entering AUTO, whenever the setpoint changes, and
-again every `command_keepalive_s` (30 s). While it is off, the tree turns the
+the five settings below on the first entry to AUTO after the runtime starts,
+whenever the setpoint changes, and again every `command_keepalive_s` (30 s). A
+later entry to AUTO sends them with the next keepalive: at once if the last send
+was 30 s or more ago, otherwise within 30 s. While it is off, the tree turns the
 heater off. The heater's mode-transition behaviour:
 
 - AUTO → MANUAL leaves the heater as the tree last set it, so a routine
@@ -217,9 +221,9 @@ drives their safe state (heater and motors off) and refuses automation's calls
 to them until AUTO is entered again. Operate shows "came back after a loss.
 Automation won't drive them until you go MANUAL → AUTO", with a button to
 Mode. After three refused calls (about 60 s at the 30 s keepalive) the run
-goes to FAULT; the way back is then FAULT → MANUAL → AUTO. Either way, entering
-AUTO sends the five settings again, so nothing needs retyping. The loop starts
-from zero, so the relay builds up over several minutes. Measured on the
+goes to FAULT; the way back is then FAULT → MANUAL → AUTO. Either way, once back
+in AUTO the keepalive sends the five settings again, so nothing needs retyping.
+The loop starts from zero, so the relay builds up over several minutes. Measured on the
 reference rig on 2026-11-07: a 10 s e-stop (bus errors from 19:58:50), the
 first refused call at 19:59:05, FAULT at 20:00:05, AUTO at 20:00:26, and the
 pad rising again from 20:02.
@@ -371,7 +375,7 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `sample_request_pulse_s`    | int64 | 5       | Duration of a "Sample now" pulse      |
 | `heater_enable`             | bool  | false   | Hold the heater at the pad setpoint; off turns the heater off (see "Heater") |
 | `heater_pad_setpoint_c`     | double | 0.0    | Pad setpoint, 0–65 °C; 0 is off. The liquid settles well below it |
-| `compensation_temp_c`       | double | 25.0   | Temperature the pH and DO probes compensate for, 0–100 °C; sent on entering AUTO and on change |
+| `compensation_temp_c`       | double | 25.0   | Temperature the pH and DO probes compensate for, 0–100 °C; sent on the first entry to AUTO after the runtime starts and on change |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor and heater commands |
 | `command_min_spacing_ms`    | int64 | 500     | Minimum spacing between commands      |
 
