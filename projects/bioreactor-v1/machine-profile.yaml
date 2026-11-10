@@ -145,7 +145,7 @@ components:
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.10.0"
+      version: "0.11.0"
     ezo:
       repo: anolishq/anolis-provider-ezo
       version: "0.6.0"
