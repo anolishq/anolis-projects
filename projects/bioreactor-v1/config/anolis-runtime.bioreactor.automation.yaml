@@ -211,7 +211,8 @@ automation:
       min: 0.0
       max: 65.0
     # The temperature the pH and DO probes compensate for: the culture's.
-    # Sent on entering AUTO and whenever it changes.
+    # Sent on the first entry to AUTO after the runtime starts, and whenever
+    # it changes.
     - name: compensation_temp_c
       type: double
       default: 25.0
