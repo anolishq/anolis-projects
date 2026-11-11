@@ -141,17 +141,17 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.13.0"
+    version: "0.14.0"
   providers:
     bread:
       repo: anolishq/anolis-provider-bread
-      version: "0.11.0"
+      version: "0.12.0"
     ezo:
       repo: anolishq/anolis-provider-ezo
-      version: "0.6.0"
+      version: "0.7.0"
     adafruit:
       repo: anolishq/anolis-provider-adafruit
-      version: "0.2.0"
+      version: "0.3.0"
   optional:
     telemetry_export:
       package: anolis-telemetry-export
