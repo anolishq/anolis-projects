@@ -1,0 +1,33 @@
+schema_version: 1
+machine_id: bioreactor-v2
+display_name: Bioreactor Lab-Grade v2 (placeholder)
+
+# Placeholder: v2 starts from bioreactor-v1, so every path below is v1's own
+# file. Each one moves into this directory when v2 first differs from v1.
+runtime_profiles:
+  manual: ../bioreactor-v1/config/anolis-runtime.bioreactor.manual.yaml
+
+providers:
+  bread0:
+    config: ../bioreactor-v1/config/provider-bread.bioreactor.yaml
+  ezo0:
+    config: ../bioreactor-v1/config/provider-ezo.bioreactor.yaml
+  adafruit0:
+    config: ../bioreactor-v1/config/provider-adafruit.bioreactor.yaml
+
+# Required by the machine-profile schema; nothing acts on it. There is no
+# components block, so install.sh has no versions to install from this profile.
+compatibility:
+  runtime:
+    config_contract: "01-runtime-config"
+    http_contract: "02-runtime-http"
+  providers:
+    bread0:
+      strategy: pinned-ref
+      version: "as bioreactor-v1"
+    ezo0:
+      strategy: pinned-ref
+      version: "as bioreactor-v1"
+    adafruit0:
+      strategy: pinned-ref
+      version: "as bioreactor-v1"
