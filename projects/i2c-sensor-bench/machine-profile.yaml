@@ -42,7 +42,7 @@ operator:
 components:
   runtime:
     repo: anolishq/anolis
-    version: "0.14.0"
+    version: "0.15.0"
   providers:
     adafruit:
       repo: anolishq/anolis-provider-adafruit
