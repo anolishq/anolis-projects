@@ -1,0 +1,13 @@
+# Every minute during an unattended run. Enable it when the run starts and
+# disable it when the run ends: outside a run the mode is not AUTO, and every
+# ping would be a fail.
+[Unit]
+Description=Anolis run heartbeat, every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

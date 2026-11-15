@@ -352,6 +352,49 @@ sudo systemctl stop heater-guard
 It also stops when the slices lose power for 2 minutes: an e-stop, a supply
 change, or rework. Restart it after.
 
+## Unattended runs: the heartbeat
+
+Nothing on the rig resumes AUTO after a fault, a runtime restart or a power
+cut: the rig stops in a safe state. The heartbeat is how you find out. Every
+minute, `scripts/run_heartbeat.py` pings a
+[Healthchecks](https://healthchecks.io) check when the run is healthy, and
+pings it with `/fail` and the reasons when it is not:
+
+- the mode is not AUTO;
+- the software stop or a device-loss latch is held;
+- a provider is not AVAILABLE;
+- a device's health is not OK, or its watchdog has tripped;
+- the runtime does not answer.
+
+The check alerts you on a fail and on silence, so a Pi that lost power,
+network or its disk is reported too. Only the ping and the reasons leave the
+Pi.
+
+Once:
+
+1. Create a check on healthchecks.io (or a self-hosted Healthchecks): period
+   1 minute, grace 5 minutes, with the alert channel you want.
+2. Keep its ping URL in your secret store. On the Pi, put it in
+   `/etc/anolis/heartbeat.env`, root only:
+   `HEARTBEAT_URL=https://hc-ping.com/<uuid>`, then
+   `sudo chmod 600 /etc/anolis/heartbeat.env`.
+3. `sudo bash projects/bioreactor-v1/host/install-run-heartbeat.sh`. It
+   refuses to install without that file, or with the file readable by others.
+4. Check once by hand: `sudo systemctl start run-heartbeat.service`, then
+   `journalctl -u run-heartbeat -n 5`. Outside a run it reports `mode=IDLE`.
+
+Each run:
+
+```bash
+# once the run is in AUTO:
+sudo systemctl enable --now run-heartbeat.timer
+# when the run ends, before leaving AUTO:
+sudo systemctl disable --now run-heartbeat.timer
+```
+
+Outside a run every ping is a fail, so pause the check in Healthchecks
+instead if the timer stays on.
+
 ## Automation parameter reference
 
 All parameters are runtime-tunable over HTTP (`POST /v0/parameters` on the
