@@ -9,14 +9,19 @@ mode, then:
    setpoint 0, relay off) and both probes set to compensate for 25 C. The
    runtime's startup safe state has already turned the heater off, so step 5
    is the one that shows the tree turning it off;
-2. turns the heater on at a 58 C pad setpoint, and expects period 10000 ms,
+2. turns the impeller and the heater on at a 58 C pad setpoint, and expects
+   period 10000 ms,
    thermocouple select 2 / 1 and gains 255 / 10 / 0 sent before the loop is
    closed at 58 C, and rlht0 to read back channel 1 on thermocouple 2;
 3. moves the pad setpoint and the compensation temperature, and expects
    both followed;
 4. leaves AUTO for MANUAL, and expects the heater left as it was;
 5. turns the heater off in AUTO, and expects it off;
-6. turns it back on and enters FAULT, and expects the heater off.
+6. turns it back on, then turns the impeller off, then sets its PWM to 0,
+   and expects the heater off each time and back on after: the tree heats
+   only while the impeller stirs (#165). A braked impeller is the bench's
+   to check: the mock DCMT never reports a brake engaged;
+7. enters FAULT, and expects the heater off.
 
 The mock RLHT reads back mode, setpoints, relay state and thermocouple
 select (anolis-provider-bread with #224), but not period or gains, so those
@@ -212,6 +217,7 @@ def main() -> int:
             )
 
             seen = []
+            api.set_param("impeller_enable", True)
             api.set_param("heater_pad_setpoint_c", 58.0)
             api.set_param("heater_enable", True)
             ok &= eventually("on: the loop closes at a 58 C pad setpoint", heater(api, "closed_loop", 58.0), 15)
@@ -257,6 +263,15 @@ def main() -> int:
 
             api.set_param("heater_enable", True)
             ok &= eventually("back on in AUTO", heater(api, "closed_loop", 50.0), 15)
+
+            api.set_param("impeller_enable", False)
+            ok &= eventually("the impeller off turns the heater off", heater(api, "open_loop", 0.0, relay=False), 15)
+            api.set_param("impeller_enable", True)
+            ok &= eventually("the impeller back on turns the heater back on", heater(api, "closed_loop", 50.0), 15)
+            api.set_param("impeller_pwm", 0)
+            ok &= eventually("an impeller PWM of 0 turns the heater off", heater(api, "open_loop", 0.0, relay=False), 15)
+            api.set_param("impeller_pwm", 100)
+            ok &= eventually("an impeller PWM above 0 turns it back on", heater(api, "closed_loop", 50.0), 15)
             api.mode("FAULT")
             ok &= eventually("FAULT turns the heater off", heater(api, "open_loop", 0.0, relay=False), 15)
 

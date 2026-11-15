@@ -189,14 +189,37 @@
 
         Off: the three calls of the safe state, each sent even if another
         fails.
+
+        The heater runs only while the impeller stirs (#165): heater_enable,
+        the impeller on at a PWM above 0, and dcmt0's motor 2 brake read
+        released with quality OK. Unstirred, the vessel stratifies and the
+        pad runs hotter for the same heat (docs/runbook.md). A watchdog trip,
+        an e-stop hold or a fault engages that brake, and a write to dcmt0
+        fails only at its next keepalive, so the brake reading is what turns
+        the heater off within a tick. In open loop motor2_value echoes the
+        commanded PWM, braked or not, so it is not the evidence. The quality
+        is compared here rather than with CheckQuality, which logs every
+        mismatch at INFO, twice a second while the bus is dark. heater_on
+        is in the emit key, so the change sends the off calls at once.
       -->
-      <BuildArgsJson arg1_name="heater_enable" arg1_type="bool" arg1_bool="{heater_enable}" arg2_name="pad_setpoint_c" arg2_type="double" arg2_num="{heater_pad_setpoint_c}" json="{rlht0_key}"/>
+      <Fallback name="heater_on_while_stirring">
+        <Sequence>
+          <CheckBool value="{heater_enable}" expected="true"/>
+          <CheckBool value="{impeller_enable}" expected="true"/>
+          <ScriptCondition code="impeller_pwm &gt; 0"/>
+          <ReadSignal device_handle="bread0/dcmt0" signal_id="motor2_brake" value="{impeller_brake}" quality="{impeller_brake_quality}"/>
+          <ScriptCondition code="impeller_brake == 0 &amp;&amp; impeller_brake_quality == 'OK'"/>
+          <Script code="heater_on := true"/>
+        </Sequence>
+        <Script code="heater_on := false"/>
+      </Fallback>
+      <BuildArgsJson arg1_name="heater_on" arg1_type="bool" arg1_bool="{heater_on}" arg2_name="pad_setpoint_c" arg2_type="double" arg2_num="{heater_pad_setpoint_c}" json="{rlht0_key}"/>
       <EmitOnChangeOrInterval key="{rlht0_key}" keepalive_s="{command_keepalive_s}" min_spacing_ms="{command_min_spacing_ms}" emit="{rlht0_emit}" reason="{rlht0_emit_reason}"/>
 
       <Fallback name="write_rlht0_if_emit">
         <Sequence name="heater_on">
           <CheckBool value="{rlht0_emit}" expected="true"/>
-          <CheckBool value="{heater_enable}" expected="true"/>
+          <CheckBool value="{heater_on}" expected="true"/>
           <BuildArgsJson arg1_name="period1_ms" arg1_type="int64" arg1_num="10000" arg2_name="period2_ms" arg2_type="int64" arg2_num="10000" json="{rlht0_periods_args}"/>
           <CallDevice device_handle="bread0/rlht0" function_name="set_periods_ms" args="{rlht0_periods_args}" reason="{rlht0_emit_reason}"/>
           <BuildArgsJson arg1_name="channel1_thermocouple" arg1_type="int64" arg1_num="2" arg2_name="channel2_thermocouple" arg2_type="int64" arg2_num="1" json="{rlht0_tc_args}"/>
@@ -210,7 +233,7 @@
         </Sequence>
         <Sequence name="heater_off">
           <CheckBool value="{rlht0_emit}" expected="true"/>
-          <CheckBool value="{heater_enable}" expected="false"/>
+          <CheckBool value="{heater_on}" expected="false"/>
           <BuildArgsJson arg1_name="setpoint1_c" arg1_type="double" arg1_num="0" arg2_name="setpoint2_c" arg2_type="double" arg2_num="0" json="{rlht0_off_setpoints_args}"/>
           <ForceSuccess>
             <CallDevice device_handle="bread0/rlht0" function_name="set_setpoints" args="{rlht0_off_setpoints_args}" reason="{rlht0_emit_reason}"/>
