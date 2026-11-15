@@ -207,7 +207,16 @@ the five settings below on the first entry to AUTO after the runtime starts,
 whenever the setpoint changes, and again every `command_keepalive_s` (30 s). A
 later entry to AUTO sends them with the next keepalive: at once if the last send
 was 30 s or more ago, otherwise within 30 s. While it is off, the tree turns the
-heater off. The heater's mode-transition behaviour:
+heater off.
+
+**The tree heats only while the impeller stirs** (#165). Turn the **Stirring**
+group on as well, at a speed above 0. The tree turns the heater off within a
+tick when the impeller is switched off or set to 0, or when dcmt0's motor 2
+brake reads engaged or its reading is not OK. A watchdog trip, an e-stop hold
+and a motor fault each engage that brake. The heater comes back on by itself
+once the impeller runs again with its brake released.
+
+The heater's mode-transition behaviour:
 
 - AUTO → MANUAL leaves the heater as the tree last set it, so a routine
   hand-off doesn't cool the culture;
@@ -373,7 +382,7 @@ the `automation` or `full` profile; there is no dedicated CLI for them.
 | `sample_requests`           | int64 | 0       | "Sample now" counter: each increase runs one sample pulse |
 | `sample_request_delay_s`    | int64 | 0       | Delay from a "Sample now" press to its pulse |
 | `sample_request_pulse_s`    | int64 | 5       | Duration of a "Sample now" pulse      |
-| `heater_enable`             | bool  | false   | Hold the heater at the pad setpoint; off turns the heater off (see "Heater") |
+| `heater_enable`             | bool  | false   | Hold the heater at the pad setpoint while the impeller stirs; off turns the heater off (see "Heater") |
 | `heater_pad_setpoint_c`     | double | 0.0    | Pad setpoint, 0–65 °C; 0 is off. The liquid settles well below it |
 | `compensation_temp_c`       | double | 25.0   | Temperature the pH and DO probes compensate for, 0–100 °C; sent on the first entry to AUTO after the runtime starts and on change |
 | `command_keepalive_s`       | int64 | 30      | Keepalive interval for motor and heater commands |
