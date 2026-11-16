@@ -191,16 +191,19 @@
         fails.
 
         The heater runs only while the impeller stirs (#165): heater_enable,
-        the impeller on at a PWM above 0, and dcmt0's motor 2 brake read
-        released with quality OK. Unstirred, the vessel stratifies and the
-        pad runs hotter for the same heat (docs/runbook.md). A watchdog trip,
-        an e-stop hold or a fault engages that brake, and a write to dcmt0
-        fails only at its next keepalive, so the brake reading is what turns
-        the heater off within a tick. In open loop motor2_value echoes the
-        commanded PWM, braked or not, so it is not the evidence. The quality
-        is compared here rather than with CheckQuality, which logs every
-        mismatch at INFO, twice a second while the bus is dark. heater_on
-        is in the emit key, so the change sends the off calls at once.
+        the impeller on at a PWM above 0, and dcmt0's motor 2 read with its
+        brake released and its applied value above 0, both with quality OK.
+        Unstirred, the vessel stratifies and the pad runs hotter for the
+        same heat (docs/runbook.md). A watchdog trip, an e-stop hold or a
+        fault engages that brake, and a write to dcmt0 fails only at its next
+        keepalive, so the readings are what turn the heater off within a
+        tick. The value is needed as well as the brake: on the reference rig
+        on 2026-11-16 the value read 0 while braked, and after the brake was
+        released it stayed 0 until the next write to dcmt0, since the
+        firmware does not resume a motor on release. The quality is compared
+        here rather than with CheckQuality, which logs every mismatch at
+        INFO, twice a second while the bus is dark. heater_on is in the emit
+        key, so the change sends the off calls at once.
       -->
       <Fallback name="heater_on_while_stirring">
         <Sequence>
@@ -209,6 +212,8 @@
           <ScriptCondition code="impeller_pwm &gt; 0"/>
           <ReadSignal device_handle="bread0/dcmt0" signal_id="motor2_brake" value="{impeller_brake}" quality="{impeller_brake_quality}"/>
           <ScriptCondition code="impeller_brake == 0 &amp;&amp; impeller_brake_quality == 'OK'"/>
+          <ReadSignal device_handle="bread0/dcmt0" signal_id="motor2_value" value="{impeller_value}" quality="{impeller_value_quality}"/>
+          <ScriptCondition code="impeller_value &gt; 0 &amp;&amp; impeller_value_quality == 'OK'"/>
           <Script code="heater_on := true"/>
         </Sequence>
         <Script code="heater_on := false"/>

@@ -212,9 +212,12 @@ heater off.
 **The tree heats only while the impeller stirs** (#165). Turn the **Stirring**
 group on as well, at a speed above 0. The tree turns the heater off within a
 tick when the impeller is switched off or set to 0, or when dcmt0's motor 2
-brake reads engaged or its reading is not OK. A watchdog trip, an e-stop hold
-and a motor fault each engage that brake. The heater comes back on by itself
-once the impeller runs again with its brake released.
+reads braked, reads an applied value of 0, or has a reading that is not OK. A
+watchdog trip, an e-stop hold and a motor fault each engage that brake.
+Releasing the brake does not restart the motor: it stays at 0 until the tree's
+next write to dcmt0, at most `command_keepalive_s` later, and the heater stays
+off until then. The heater comes back on by itself once the impeller is
+driven again with its brake released.
 
 The heater's mode-transition behaviour:
 
