@@ -42,6 +42,7 @@ providers:
       timeout_ms: 30000
 
 polling:
+  # Keep in step with hardware.sample_interval_ms in provider-ezo.conflict.mock.yaml.
   interval_ms: 500
 
 telemetry:
