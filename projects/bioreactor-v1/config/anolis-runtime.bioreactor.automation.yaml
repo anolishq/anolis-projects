@@ -42,10 +42,12 @@ providers:
       timeout_ms: 30000
 
   - id: adafruit0
-    # Frozen Python provider: install.sh puts it in <prefix>/bin, and it has no
-    # CMake build directory for the ../anolis-provider-*/build/... form the
-    # other providers use. A run from a checkout needs it installed there.
-    command: /opt/anolis/bin/anolis-provider-adafruit
+    # The deploy token install.sh rewrites to <prefix>/bin, as for the other
+    # providers; the workbench's export and anolis-validate accept only this
+    # form. The provider is a frozen Python binary with no CMake build
+    # directory, so a run straight from a checkout needs the binary at this
+    # path (a symlink to an installed one does).
+    command: ../anolis-provider-adafruit/build/dev-release/anolis-provider-adafruit
     args: ["--config", "../anolis-projects/projects/bioreactor-v1/config/provider-adafruit.bioreactor.yaml"]
     timeout_ms: 5000
     hello_timeout_ms: 5000
